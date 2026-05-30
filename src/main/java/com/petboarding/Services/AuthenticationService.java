@@ -25,6 +25,12 @@ public class AuthenticationService {
         boolean valid = PasswordUtil.verifyPassword(password, user.getSalt(), user.getPasswordHash());
 
         if (valid) {
+
+            if (user.getRole().equalsIgnoreCase("ADMIN")) {
+                user.setAdmin(true);
+            } else {
+                user.setAdmin(false);
+            }
             return user;
         } else {
             return null;

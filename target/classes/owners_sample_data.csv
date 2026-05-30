@@ -1,0 +1,11 @@
+owner_id,name,phone,email,address
+1,John Smith,505-555-1122,john.smith@example.com,123 Oak St, Los Lunas NM
+2,Sarah Johnson,505-555-2211,sarah.j@example.com,44 Pine Rd, Belen NM
+3,Michael Brown,505-555-3344,mike.brown@example.com,890 Elm Ave, Albuquerque NM
+4,Emily Davis,505-555-7788,emily.davis@example.com,77 Willow Ln, Los Lunas NM
+5,Robert Wilson,505-555-9922,robert.w@example.com,300 Cedar Ct, Bosque Farms NM
+6,Ashley Martinez,505-555-4477,ashley.m@example.com,12 Cottonwood Dr Los Lunas NM
+7,David Thompson,505-555-8899,david.t@example.com,55 Mesa Rd Belen NM
+8,Jessica Lee,505-555-6633,jessica.lee@example.com,900 Sunset Blvd Albuquerque NM
+9,Christopher Young,505-555-5522,chris.y@example.com,18 Desert Sage Ln Los Lunas NM
+10,Amanda Perez,505-555-7744,amanda.p@example.com,222 Willow Creek Rd Bosque Farms NM

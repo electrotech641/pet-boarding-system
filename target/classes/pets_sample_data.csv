@@ -1,0 +1,21 @@
+pet_id,owner_id,name,species,age,notes
+1,1,Buddy,Dog,5,Loves treats and belly rubs
+2,1,Mittens,Cat,3,Shy but friendly
+3,2,Rex,Dog,2,High energy
+4,3,Bella,Dog,7,Needs medication with food
+5,3,Shadow,Cat,4,Indoor only
+6,4,Luna,Cat,1,Very playful
+7,5,Max,Dog,6,Good with kids
+8,4,Rocky,Dog,6,Protective but gentle
+9,5,Max,Dog,6,Good with kids
+10,5,Whiskers,Cat,8,Senior cat with arthritis
+11,6,Charlie,Dog,3,Loves fetch
+12,6,Peanut,Cat,2,Curious and energetic
+13,7,Zeus,Dog,4,Strong and active
+14,7,Cleo,Cat,5,Prefers quiet spaces
+15,8,Harley,Dog,1,Puppy with lots of energy
+16,8,Maple,Cat,3,Calm and affectionate
+17,9,Buster,Dog,9,Older dog, slow moving
+18,9,Smokey,Cat,6,Enjoys sunbathing
+19,10,Daisy,Dog,2,Very friendly
+20,10,Piper,Cat,4,Loves climbing

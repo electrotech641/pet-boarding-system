@@ -68,7 +68,11 @@ public class LoginScreen extends JFrame {
             if (user != null) {
                 JOptionPane.showMessageDialog(this, "Login Successful");
 
-                new MainScreen(user).setVisible(true);
+                MainScreen mainView = new MainScreen(user);
+                mainView.setVisible(true);
+                mainView.loadPetData();
+                mainView.loadOwnerData();
+                mainView.loadStaysData();
                 dispose();
 
             } else {

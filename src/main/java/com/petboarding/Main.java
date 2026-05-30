@@ -2,6 +2,7 @@ package com.petboarding;
 
 import com.petboarding.Database.DatabaseManager;
 import com.petboarding.Database.UserDAO;
+import com.petboarding.Database.CSVLoader;
 import com.petboarding.Models.User;
 import com.petboarding.View.LoginScreen;
 
@@ -27,6 +28,14 @@ public class Main {
             unauthorized access
          */
         createDefaultAdminUser();
+
+        /*
+            Load sample data, run once to load database
+         */
+
+        //CSVLoader.loadOwners("owners_sample_data.csv");
+        //CSVLoader.loadPets("pets_sample_data.csv");
+        //CSVLoader.loadStays("stays_sample_data.csv");
 
         //Display LOGIN screen on startup, ensure Swing does this on the main thread to avoid UI issues
         javax.swing.SwingUtilities.invokeLater(() -> {

@@ -7,6 +7,7 @@ public class User {
     private String passwordHash;
     private String salt;
     private String role;
+    private boolean isAdmin;
 
     //Default constructor
     public User() {}
@@ -60,5 +61,13 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public boolean isAdmin() {
+        return isAdmin;
+    }
+
+    public void setAdmin(boolean isAdmin) {
+        this.isAdmin = isAdmin;
     }
 }
