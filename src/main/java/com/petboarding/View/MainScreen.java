@@ -117,21 +117,30 @@ public class MainScreen extends JFrame {
         /*
             Admin ONLY panel
          */
-        JPanel adminTools = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        adminTools.setBorder(BorderFactory.createTitledBorder("Admin Tools"));
+        JPanel adminTools = null;
 
         if (currentUser.isAdmin()) {
+            adminTools = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            adminTools.setBorder(BorderFactory.createTitledBorder("Admin Tools"));
+
             JButton manageUsersButton = new JButton("Manage Users");
             adminTools.add(manageUsersButton);
         }
 
+        //Build control bar
+        JPanel controlBar = new JPanel();
 
-
-        //Build control bar with owner, pet, and admin tools
-        JPanel controlBar = new JPanel(new GridLayout(1, 3));
-        controlBar.add(petTools);
-        controlBar.add(ownerTools);
-        controlBar.add(adminTools);
+        if (currentUser.isAdmin()) {
+            controlBar.setLayout(new GridLayout(1, 3));
+            controlBar.add(petTools);
+            controlBar.add(ownerTools);
+            controlBar.add(adminTools);
+        }
+        else {
+            controlBar.setLayout(new GridLayout(1, 2));
+            controlBar.add(petTools);
+            controlBar.add(ownerTools);
+        }
 
         //Build the top row of the top panel with stays and stays management
         JPanel staysTopRow = new JPanel(new BorderLayout());
@@ -204,7 +213,15 @@ public class MainScreen extends JFrame {
     }
 
     public void loadOwnerData() {
+
         OwnerDAO.loadOwners(ownerRepository);
+
+        //Check if current user is read only and escape if so
+        if (currentUser.isReadOnly()) {
+            statusLabel.setText("Owner data only accessible to staff and admin");
+            return;
+        }
+        
         ownerTablePanel.loadOwnersIntoTable(ownerRepository);
     }
 

@@ -31,7 +31,7 @@ public class UserDAO {
         return null;
     }
 
-    public void createUser(String username, String password, String role) throws SQLException {
+    public boolean createUser(String username, String password, String role) throws SQLException {
         String salt = PasswordUtil.generateSalt();
         String hash = PasswordUtil.hashPassword(password, salt);
 
@@ -44,7 +44,7 @@ public class UserDAO {
             statement.setString(2, hash);
             statement.setString(3, salt);
             statement.setString(4, role);
-            statement.executeUpdate();
+            return statement.executeUpdate() > 0;
         }
     }
 }

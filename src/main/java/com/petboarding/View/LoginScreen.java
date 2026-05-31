@@ -25,15 +25,18 @@ public class LoginScreen extends JFrame {
         setLocationRelativeTo(null);
 
         /*
-            Create new panel and compenents
+            Create new panel and components
          */
-        JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
+        JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
 
         usernameField = new JTextField();
         passwordField = new JPasswordField();
 
         JButton loginButton = new JButton("Login");
         loginButton.addActionListener(e -> handleLogin());
+
+        JButton createAccountButton = new JButton("Create Account");
+        createAccountButton.addActionListener(e -> handleCreateAccount());
 
         /*
             Set login button as default, so that ENTER activates it
@@ -49,6 +52,7 @@ public class LoginScreen extends JFrame {
         panel.add(passwordField);
         panel.add(new JLabel(""));
         panel.add(loginButton);
+        panel.add(createAccountButton);
 
 
         add(panel);
@@ -79,6 +83,31 @@ public class LoginScreen extends JFrame {
                 JOptionPane.showMessageDialog(this, "Login Failed");
             }
 
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Database Error");
+        }
+    }
+
+    private void handleCreateAccount() {
+        String username = usernameField.getText();
+        String password = String.valueOf(passwordField.getPassword());
+
+        if (username.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Username and password are required");
+            return;
+        }
+
+        try {
+            boolean success = authService.createUser(username, password, "READ_ONLY");
+
+            if (success) {
+                JOptionPane.showMessageDialog(this, "User created successfully");
+                handleLogin();
+            }
+            else {
+                JOptionPane.showMessageDialog(this, "User creation failed");
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Database Error");

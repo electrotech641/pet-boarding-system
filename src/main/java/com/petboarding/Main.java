@@ -48,7 +48,7 @@ public class Main {
 
         /*
             Search for existing "admin" user, if none exists, creates it with default password
-            **********DON'T SHIP WITH THIS IF YOU WANT APPLICATION SECURITY IN PLACE***************
+
          */
         try {
             User existing = userDAO.findByUsername("admin");
@@ -56,7 +56,7 @@ public class Main {
             if (existing == null) {
                 System.out.println("No admin user found - creating default admin user");
 
-                userDAO.createUser("admin", "admin", "ADMIN");   //Change this if you want different default admin credentials
+                userDAO.createUser("admin", "admin", "ADMIN");   //Change this to desired admin password
 
                 System.out.println("Created default admin, username: admin, password: admin");
             }

@@ -104,14 +104,14 @@ public class PetTablePanel extends JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2 && petTable.getSelectedRow() != -1) {
-                    if (currentUser.isAdmin()) {
-                        int row = petTable.getSelectedRow();
-                        int petId = (int) petTable.getValueAt(row, 0);
 
-                        Pet pet = petRepository.getPetById(petId);
+                    int row = petTable.getSelectedRow();
+                    int petId = (int) petTable.getValueAt(row, 0);
 
-                        new PetDetailsScreen(pet, currentUser, ownerRepository).setVisible(true);
-                    }
+                    Pet pet = petRepository.getPetById(petId);
+
+                    new PetDetailsScreen(pet, currentUser, ownerRepository).setVisible(true);
+
                 }
             }
         });

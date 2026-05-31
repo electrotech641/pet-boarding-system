@@ -36,4 +36,8 @@ public class AuthenticationService {
             return null;
         }
     }
+
+    public boolean createUser(String username, String password, String role) throws SQLException {
+        return userDAO.createUser(username, password, role);
+    }
 }

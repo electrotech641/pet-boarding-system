@@ -8,6 +8,7 @@ public class User {
     private String salt;
     private String role;
     private boolean isAdmin;
+    private boolean isReadOnly;
 
     //Default constructor
     public User() {}
@@ -69,5 +70,9 @@ public class User {
 
     public void setAdmin(boolean isAdmin) {
         this.isAdmin = isAdmin;
+    }
+
+    public boolean isReadOnly() {
+        return role.equals("READ_ONLY");
     }
 }

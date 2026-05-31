@@ -41,6 +41,11 @@ public class OwnerTablePanel extends JPanel {
         ownerTable.setFillsViewportHeight(true);
         ownerTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
+        if (currentUser.isReadOnly()) {
+            showReadOnlyMessage();
+            return;
+        }
+
         ownerTable.getColumnModel().getColumn(0).setPreferredWidth(50);     //id
         ownerTable.getColumnModel().getColumn(1).setPreferredWidth(200);    //name
         ownerTable.getColumnModel().getColumn(2).setPreferredWidth(150);    //phone
@@ -176,5 +181,11 @@ public class OwnerTablePanel extends JPanel {
         }
 
         ownerTable.getTableHeader().repaint();
+    }
+
+    private void showReadOnlyMessage() {
+        JLabel message = new JLabel("Owner data only accessible to staff and admin", SwingConstants.CENTER);
+        message.setFont(new Font("Arial", Font.BOLD, 16));
+        add(message, BorderLayout.CENTER);
     }
 }

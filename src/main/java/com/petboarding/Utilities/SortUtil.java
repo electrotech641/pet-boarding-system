@@ -1,6 +1,7 @@
+//Packages
 package com.petboarding.Utilities;
 
-import com.petboarding.Models.Pet;
+//Imports
 import java.util.ArrayList;
 import java.util.Comparator;
 
