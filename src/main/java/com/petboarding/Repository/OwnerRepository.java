@@ -32,25 +32,4 @@ public class OwnerRepository {
         SortUtil.sort(ownerList, comparator);
     }
 
-    /*
-        Binary insertion for owner list
-     */
-    private void insertInOrder(Owner owner) {
-        int left = 0;
-        int right = ownerList.size() - 1;
-        String newName = owner.getName();
-
-        while (left <= right) {
-            int mid = (left + right) / 2;
-            String midName = ownerList.get(mid).getName();
-
-            int compareTo = newName.compareToIgnoreCase(midName);
-
-            if (compareTo > 0) {
-                left = mid + 1;
-            } else {
-                right = mid - 1;
-            }
-        }
-    }
 }

@@ -31,7 +31,8 @@ public class StayRepository {
     }
 
     /*
-        Binary insertion for stays, by check in date
+        Binary insertion for stays, by check in date in ascending order for initial stays table view
+        This will initially populate the current stays table with the oldest check in dates at the top
      */
     private void insertInOrder(Stay stay) {
         int left = 0;
