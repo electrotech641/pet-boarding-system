@@ -2,13 +2,17 @@
 package com.petboarding.View;
 
 //Imports
-import com.petboarding.Data.CurrentStays;
-import com.petboarding.Data.OwnerData;
-import com.petboarding.Data.PetData;
-import com.petboarding.Database.CurrentStaysRepository;
-import com.petboarding.Database.OwnerRepository;
-import com.petboarding.Database.PetRepository;
+import com.petboarding.Repository.StayRepository;
+import com.petboarding.Repository.OwnerRepository;
+import com.petboarding.Repository.PetRepository;
+import com.petboarding.Database.StayDAO;
+import com.petboarding.Database.OwnerDAO;
+import com.petboarding.Database.PetDAO;
 import com.petboarding.Models.*;
+import com.petboarding.View.DataViews.CurrentStaysTablePanel;
+import com.petboarding.View.DataViews.OwnerTablePanel;
+import com.petboarding.View.DataViews.PetTablePanel;
+import com.petboarding.View.DetailViews.PetDetailsScreen;
 import javax.swing.*;
 import java.awt.*;
 
@@ -16,12 +20,12 @@ public class MainScreen extends JFrame {
 
     private User currentUser;
     private JLabel statusLabel;
-    private PetData petData = new PetData();
+    private PetRepository petRepository = new PetRepository();
     private PetTablePanel petTablePanel;
-    private OwnerData ownerData = new OwnerData();
+    private OwnerRepository ownerRepository = new OwnerRepository();
     private OwnerTablePanel ownerTablePanel;
     private CurrentStaysTablePanel currentStaysTablePanel;
-    private CurrentStays currentStaysData = new CurrentStays();
+    private StayRepository stayRepository = new StayRepository();
 
     public MainScreen(User user) {
         this.currentUser = user;
@@ -36,7 +40,10 @@ public class MainScreen extends JFrame {
         statusLabel = new JLabel("Welcome, " + user.getUsername() + "!");
         statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
-        //Load logo image
+        /*
+            PetBoarding LOGO
+            Load logo image
+         */
         ImageIcon logoIcon = new ImageIcon(getClass().getResource("/logo.png"));
         JLabel logoLabel = new JLabel(logoIcon);
         logoLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -46,12 +53,12 @@ public class MainScreen extends JFrame {
         Image scaled = logoIcon.getImage().getScaledInstance(700, 184, Image.SCALE_SMOOTH);
         logoLabel.setIcon(new ImageIcon(scaled));
 
-        //Add pet table and owners table split panel
-        petTablePanel = new PetTablePanel(petData, ownerData, user, statusLabel);
-        ownerTablePanel = new OwnerTablePanel(ownerData, user, statusLabel);
-        currentStaysTablePanel = new CurrentStaysTablePanel(currentStaysData, currentUser, statusLabel);
+        //Create pet table, owners table, and current stays panels
+        petTablePanel = new PetTablePanel(petRepository, ownerRepository, user, statusLabel);
+        ownerTablePanel = new OwnerTablePanel(ownerRepository, user, statusLabel);
+        currentStaysTablePanel = new CurrentStaysTablePanel(stayRepository, petRepository, ownerRepository, currentUser, statusLabel);
 
-        // Manage Stays panel (right side of stays table)
+        //Create manage stays panel (right side of stays table)
         JPanel manageStaysPanel = new JPanel();
         manageStaysPanel.setLayout(new BoxLayout(manageStaysPanel, BoxLayout.Y_AXIS));
         manageStaysPanel.setBorder(BorderFactory.createTitledBorder("Manage Stays"));
@@ -68,7 +75,9 @@ public class MainScreen extends JFrame {
         manageStaysPanel.add(checkOutButton);
         manageStaysPanel.add(Box.createVerticalStrut(10));
 
-        //Build pet lookup and add pet panel
+        /*
+            Build pet lookup and add pet panel
+         */
         JPanel petTools = new JPanel(new BorderLayout());
         petTools.setBorder(BorderFactory.createTitledBorder("Pet Tools"));
 
@@ -90,7 +99,9 @@ public class MainScreen extends JFrame {
         petTools.add(petSearchPanel, BorderLayout.WEST);
         petTools.add(addPetPanel,BorderLayout.EAST);
 
-        //Build owner lookup and add panel
+        /*
+            Build owner lookup and add panel
+         */
         JPanel ownerTools = new JPanel(new FlowLayout(FlowLayout.LEFT));
         ownerTools.setBorder(BorderFactory.createTitledBorder("Owner Tools"));
 
@@ -103,7 +114,9 @@ public class MainScreen extends JFrame {
         ownerTools.add(ownerSearchButton);
         ownerTools.add(addOwnerButton);
 
-        //Admin ONLY panel
+        /*
+            Admin ONLY panel
+         */
         JPanel adminTools = new JPanel(new FlowLayout(FlowLayout.LEFT));
         adminTools.setBorder(BorderFactory.createTitledBorder("Admin Tools"));
 
@@ -145,10 +158,10 @@ public class MainScreen extends JFrame {
                 int id = Integer.parseInt(petSearchField.getText().trim());
 
                 // Use your HashMap lookup (fastest)
-                Pet pet = petData.getPetById(id);
+                Pet pet = petRepository.getPetById(id);
 
                 if (pet != null) {
-                    new PetDetailsScreen(pet, currentUser, ownerData).setVisible(true);
+                    new PetDetailsScreen(pet, currentUser, ownerRepository).setVisible(true);
                 } else {
                     JOptionPane.showMessageDialog(this, "No pet found with ID: " + id);
                 }
@@ -182,21 +195,21 @@ public class MainScreen extends JFrame {
 
     //Load pets from database into memory
     public void loadPetData() {
-        PetRepository.loadPets(petData);
+        PetDAO.loadPets(petRepository);
 
-        int count = petData.getPetList().size();
+        int count = petRepository.getPetList().size();
         statusLabel.setText("Loaded " + count + " pets from database.");
 
-        petTablePanel.loadPetsIntoTable(petData);
+        petTablePanel.loadPetsIntoTable(petRepository);
     }
 
     public void loadOwnerData() {
-        OwnerRepository.loadOwners(ownerData);
-        ownerTablePanel.loadOwnersIntoTable(ownerData);
+        OwnerDAO.loadOwners(ownerRepository);
+        ownerTablePanel.loadOwnersIntoTable(ownerRepository);
     }
 
     public void loadStaysData() {
-        CurrentStaysRepository.loadCurrentStays(currentStaysData);
-        currentStaysTablePanel.loadStaysIntoTable(currentStaysData);
+        StayDAO.loadCurrentStays(stayRepository);
+        currentStaysTablePanel.loadStaysIntoTable(stayRepository);
     }
 }

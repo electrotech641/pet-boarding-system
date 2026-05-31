@@ -3,7 +3,8 @@ package com.petboarding.View;
 
 //Imports
 import com.petboarding.Models.Pet;
-import com.petboarding.Database.PetRepository;
+import com.petboarding.Database.PetDAO;
+import com.petboarding.View.DetailViews.PetDetailsScreen;
 import javax.swing.*;
 import java.awt.*;
 
@@ -23,6 +24,7 @@ public class EditPetScreen extends JFrame{
         JTextField ageField = new JTextField(String.valueOf(pet.getAge()));
         JTextField notesField = new JTextField(pet.getNotes());
 
+        //Layout
         panel.add(new JLabel("Name:"));
         panel.add(nameField);
 
@@ -37,7 +39,7 @@ public class EditPetScreen extends JFrame{
 
         JButton saveButton = new JButton("Save Changes");
 
-        //Save changes button functionality
+        //Save changes button functionality, update pet object and attempt to update DB via DAO
         saveButton.addActionListener(e -> {
             try {
                 pet.setName(nameField.getText());
@@ -45,7 +47,7 @@ public class EditPetScreen extends JFrame{
                 pet.setAge(Integer.parseInt(ageField.getText()));
                 pet.setNotes(notesField.getText());
 
-                PetRepository.updatePet(pet);
+                PetDAO.updatePet(pet);
 
                 // ⭐ Refresh the details screen
                 parent.refreshDetails();
