@@ -111,7 +111,7 @@ public class PetTablePanel extends JPanel {
                 updateColumnHeader();
                 long end = System.nanoTime();
 
-                double ms = (end - start) / 1_000_000.0;
+                double ms = (end - start) / 1000000.0;
                 String direction = ascending ? "ascending" : "descending";
                 String colName = petTable.getColumnName(viewColumn);
 

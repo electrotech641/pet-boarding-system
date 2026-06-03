@@ -7,9 +7,11 @@ import com.petboarding.View.EditViews.EditUserScreen;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Comparator;
 
 public class ManageUsersScreen extends JFrame {
 
@@ -19,10 +21,15 @@ public class ManageUsersScreen extends JFrame {
     private User currentUser;
 
     private final String[] cols = {"User ID", "Username", "Role"};
+    private final JLabel statusLabel;
 
-    public ManageUsersScreen(UserRepository userRepository, User currentUser) {
+    private int lastSortedModelColumn = -1;
+    private boolean ascending = true;
+
+    public ManageUsersScreen(UserRepository userRepository, User currentUser, JLabel statusLabel) {
         this.userRepository = userRepository;
         this.currentUser = currentUser;
+        this.statusLabel = statusLabel;
 
         setTitle("Manage Users");
         setSize(600, 400);
@@ -74,6 +81,38 @@ public class ManageUsersScreen extends JFrame {
     }
 
     private void addListeners() {
+
+        userTable.getTableHeader().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int viewColumn = userTable.columnAtPoint(e.getPoint());
+                if (viewColumn < 0) return;
+
+                int modelColumn = userTable.convertColumnIndexToModel(viewColumn);
+
+                if (modelColumn == lastSortedModelColumn) {
+                    ascending = !ascending;
+                } else {
+                    ascending = true;
+                }
+
+                lastSortedModelColumn = modelColumn;
+
+                long start = System.nanoTime();
+                sortByColumn(modelColumn);
+                updateColumnHeader();
+                long end = System.nanoTime();
+
+                double ms = (end - start) / 1000000.0;
+                String direction = ascending ? "ascending" : "descending";
+                String colName = userTable.getColumnName(viewColumn);
+
+                statusLabel.setText(
+                        "Sorted by " + colName + " (" + direction + ") in " + String.format("%.3f ms", ms)
+                );
+            }
+        });
+
         // Double-click listener
         userTable.addMouseListener(new MouseAdapter() {
             @Override
@@ -95,6 +134,47 @@ public class ManageUsersScreen extends JFrame {
                     user.getRole()
             });
         }
+    }
+
+    /*
+        ----------------Sorting functions------------------------------
+     */
+
+    private void sortByColumn(int columnIndex) {
+        Comparator<User> comparator = getComparator(columnIndex);
+
+        if (comparator == null) return;
+        if (!ascending) comparator = comparator.reversed();
+
+        userRepository.sortUsersBy(comparator);
+        loadUsersIntoTable();
+    }
+
+    private Comparator<User> getComparator(int columnIndex) {
+        switch (columnIndex) {
+            case 0: return Comparator.comparingInt(User::getId);
+            case 1: return Comparator.comparing(user -> user.getUsername());
+            case 2: return Comparator.comparing(user -> user.getRole());
+            default: return null;
+        }
+    }
+
+    private void updateColumnHeader() {
+        for (int viewIndex = 0; viewIndex < userTable.getColumnCount(); viewIndex++) {
+            TableColumn column = userTable.getColumnModel().getColumn(viewIndex);
+
+            int modelIndex = userTable.convertColumnIndexToModel(viewIndex);
+
+            String baseHeader = cols[modelIndex];
+
+            if (modelIndex == lastSortedModelColumn) {
+                baseHeader += ascending ? " ▲" : " ▼";
+            }
+
+            column.setHeaderValue(baseHeader);
+        }
+
+        userTable.getTableHeader().repaint();
     }
 
     /*

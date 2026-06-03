@@ -383,7 +383,7 @@ public class MainScreen extends JFrame {
      */
     private void manageUsers() {
         UserDAO.loadUsers(userRepository);
-        new ManageUsersScreen(userRepository, currentUser).setVisible(true);
+        new ManageUsersScreen(userRepository, currentUser, statusLabel).setVisible(true);
     }
 
     /*
