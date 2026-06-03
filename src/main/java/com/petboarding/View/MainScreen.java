@@ -23,36 +23,38 @@ import com.petboarding.View.SearchResultsViews.PetSearchResultsScreen;
 
 import javax.swing.*;
 import java.awt.*;
+import java.sql.SQLException;
 import java.util.List;
 
 public class MainScreen extends JFrame {
 
-    private User currentUser;
-    private JLabel statusLabel;
+    private final User currentUser;
+    private final JLabel statusLabel;
 
     //Data structures
-    private PetRepository petRepository = new PetRepository();
-    private OwnerRepository ownerRepository = new OwnerRepository();
-    private StayRepository stayRepository = new StayRepository();
-    private UserRepository userRepository = new UserRepository();
+    private final PetRepository petRepository = new PetRepository();
+    private final OwnerRepository ownerRepository = new OwnerRepository();
+    private final StayRepository stayRepository = new StayRepository();
+    private final UserRepository userRepository = new UserRepository();
 
     //UI panels
-    private PetTablePanel petTablePanel;
-    private OwnerTablePanel ownerTablePanel;
-    private CurrentStaysTablePanel currentStaysTablePanel;
+    private final PetTablePanel petTablePanel;
+    private final OwnerTablePanel ownerTablePanel;
+    private final CurrentStaysTablePanel currentStaysTablePanel;
 
-    public MainScreen(User user) {
-        this.currentUser = user;
+    public MainScreen(User currentUser) {
+        this.currentUser = currentUser;
 
-        setTitle("Pet Boarding Enhanced System - Logged in as " + user.getUsername() + " (" + user.getRole() + ")");
+        setTitle("Pet Boarding Enhanced System - Logged in as " + currentUser.getUsername() + " (" + currentUser.getRole() + ")");
         setSize(1920, 1080);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
         statusLabel = buildStatusLabel();
-        petTablePanel = new PetTablePanel(petRepository, ownerRepository, user, statusLabel);
-        ownerTablePanel = new OwnerTablePanel(ownerRepository, user, statusLabel);
-        currentStaysTablePanel = new CurrentStaysTablePanel(stayRepository, petRepository, ownerRepository, currentUser, statusLabel);
+        currentStaysTablePanel = new CurrentStaysTablePanel(stayRepository, petRepository, ownerRepository, this.currentUser, statusLabel);
+        petTablePanel = new PetTablePanel(petRepository, ownerRepository, stayRepository, currentStaysTablePanel, currentUser, statusLabel);
+        ownerTablePanel = new OwnerTablePanel(ownerRepository, currentUser, statusLabel);
+
 
         JPanel topPanel = buildTopPanel();
         JSplitPane splitPane = buildMainSplitPane();
@@ -223,16 +225,25 @@ public class MainScreen extends JFrame {
 
         row.add(currentStaysTablePanel, BorderLayout.WEST);
         row.add(buildLogoPanel(), BorderLayout.CENTER);
+
+        // Add logout button to the right of the logo
+        JPanel logoutPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        logoutPanel.add(buildLogoutButton());
+        row.add(logoutPanel, BorderLayout.EAST);
+
         return row;
     }
+
 
     //Build the Top Panel, includes Current Stays and Control Bar (tools)
     private JPanel buildTopPanel() {
         JPanel top = new JPanel(new BorderLayout());
         top.add(buildStaysTopRow(), BorderLayout.NORTH);
         top.add(buildControlBar(), BorderLayout.SOUTH);
+
         return top;
     }
+
 
     //Split pane holds Pet and Owner data
     private JSplitPane buildMainSplitPane() {
@@ -245,11 +256,30 @@ public class MainScreen extends JFrame {
         return splitPane;
     }
 
+    private JButton buildLogoutButton() {
+        JButton logoutButton = new JButton("Logout");
+
+        logoutButton.addActionListener(e -> {
+            int choice = JOptionPane.showConfirmDialog(
+                    this,
+                    "Are you sure you want to log out?",
+                    "Confirm Logout",
+                    JOptionPane.YES_NO_OPTION
+            );
+
+            if (choice == JOptionPane.YES_OPTION) {
+                logout();
+            }
+        });
+
+        return logoutButton;
+    }
+
     /*
         ------------Data Methods-------------------------------------
      */
 
-    public void loadPetData() {
+    public void loadPetData() throws SQLException {
         PetDAO.loadPets(petRepository);
         statusLabel.setText("Loaded " + petRepository.getPetList().size() + " pets from database.");
         petTablePanel.loadPetsIntoTable(petRepository);
@@ -266,7 +296,7 @@ public class MainScreen extends JFrame {
         ownerTablePanel.loadOwnersIntoTable(ownerRepository);
     }
 
-    public void loadStaysData() {
+    public void loadStaysData() throws SQLException {
         StayDAO.loadCurrentStays(stayRepository);
         currentStaysTablePanel.loadStaysIntoTable(stayRepository);
     }
@@ -279,13 +309,15 @@ public class MainScreen extends JFrame {
             Pet pet = petRepository.getPetById(petId);
 
             if (pet != null) {
-                new PetDetailsScreen(pet, currentUser, ownerRepository).setVisible(true);
+                new PetDetailsScreen(pet, currentUser, ownerRepository, stayRepository, currentStaysTablePanel, petRepository).setVisible(true);
             } else {
                 JOptionPane.showMessageDialog(this, "No pet found with ID: " + petId);
             }
 
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(this, "Please enter a valid numeric ID.");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -302,7 +334,7 @@ public class MainScreen extends JFrame {
             return;
         }
 
-        new PetSearchResultsScreen(matches, currentUser, ownerRepository).setVisible(true);
+        new PetSearchResultsScreen(matches, currentUser, ownerRepository, stayRepository, currentStaysTablePanel, petRepository).setVisible(true);
     }
 
     private void ownerSearchById(int ownerId) {
@@ -352,5 +384,23 @@ public class MainScreen extends JFrame {
     private void manageUsers() {
         UserDAO.loadUsers(userRepository);
         new ManageUsersScreen(userRepository, currentUser).setVisible(true);
+    }
+
+    /*
+        ------------MISC----------------
+     */
+
+    private void logout() {
+        // Dispose ALL open windows except the LoginScreen we are about to create
+        for (Window window : Window.getWindows()) {
+            if (window instanceof JFrame || window instanceof JDialog) {
+                window.dispose();
+            }
+        }
+
+        // Return to log in screen
+        SwingUtilities.invokeLater(() -> {
+            new LoginScreen().setVisible(true);
+        });
     }
 }

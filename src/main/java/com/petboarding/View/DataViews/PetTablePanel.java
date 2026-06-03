@@ -5,6 +5,7 @@ package com.petboarding.View.DataViews;
 import com.petboarding.Repository.OwnerRepository;
 import com.petboarding.Repository.PetRepository;
 import com.petboarding.Models.*;
+import com.petboarding.Repository.StayRepository;
 import com.petboarding.View.DetailViews.PetDetailsScreen;
 
 import javax.swing.*;
@@ -13,15 +14,20 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.sql.SQLException;
 import java.util.Comparator;
 
 public class PetTablePanel extends JPanel {
 
     private JTable petTable;
     private DefaultTableModel tableModel;
-    private PetRepository petRepository;
-    private OwnerRepository ownerRepository;
-    private JLabel statusLabel;
+
+    //Persistent objects
+    private final JLabel statusLabel;
+    private final PetRepository petRepository;
+    private final OwnerRepository ownerRepository;
+    private final StayRepository stayRepository;
+    private final CurrentStaysTablePanel currentStaysTablePanel;
 
     private int lastSortedModelColumn = -1;
     private boolean ascending = true;
@@ -31,11 +37,15 @@ public class PetTablePanel extends JPanel {
 
     public PetTablePanel(PetRepository petRepository,
                          OwnerRepository ownerRepository,
+                         StayRepository stayRepository,
+                         CurrentStaysTablePanel currentStaysTablePanel,
                          User currentUser,
                          JLabel statusLabel) {
 
         this.petRepository = petRepository;
         this.ownerRepository = ownerRepository;
+        this.stayRepository = stayRepository;
+        this.currentStaysTablePanel = currentStaysTablePanel;
         this.statusLabel = statusLabel;
 
         setLayout(new BorderLayout());
@@ -116,7 +126,11 @@ public class PetTablePanel extends JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
-                    openSelectedPet(currentUser);
+                    try {
+                        openSelectedPet(currentUser);
+                    } catch (SQLException ex) {
+                        throw new RuntimeException(ex);
+                    }
                 }
             }
         });
@@ -201,7 +215,7 @@ public class PetTablePanel extends JPanel {
         petTable.getTableHeader().repaint();
     }
 
-    private void openSelectedPet(User currentUser) {
+    private void openSelectedPet(User currentUser) throws SQLException {
         int viewRow = petTable.getSelectedRow();
         if (viewRow < 0) return;
 
@@ -215,7 +229,7 @@ public class PetTablePanel extends JPanel {
         Pet pet = petRepository.getPetById(petId);
 
         if (pet != null) {
-            new PetDetailsScreen(pet, currentUser, ownerRepository).setVisible(true);
+            new PetDetailsScreen(pet, currentUser, ownerRepository, stayRepository, currentStaysTablePanel, petRepository).setVisible(true);
         }
     }
 }

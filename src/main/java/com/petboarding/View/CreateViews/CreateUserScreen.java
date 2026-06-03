@@ -11,16 +11,17 @@ import java.awt.*;
 
 public class CreateUserScreen extends JFrame {
 
-    private UserDAO userDAO = new UserDAO();
+    private final UserDAO userDAO = new UserDAO();
     private final UserRepository userRepository;
     private final ManageUsersScreen parent;
+    private final User currentUser;
 
-    private JTextField usernameField;
-    private JPasswordField passwordField;
-    private JComboBox<String> roleDropdown;
-    private JButton createButton;
+    private final JTextField usernameField;
+    private final JPasswordField passwordField;
+    private final JComboBox<String> roleDropdown;
 
-    public CreateUserScreen(UserRepository userRepository, ManageUsersScreen parent) {
+    public CreateUserScreen(User currentUser, UserRepository userRepository, ManageUsersScreen parent) {
+        this.currentUser = currentUser;
         this.userRepository = userRepository;
         this.parent = parent;
 
@@ -33,7 +34,7 @@ public class CreateUserScreen extends JFrame {
         passwordField = new JPasswordField();
         roleDropdown = new JComboBox<>(new String[]{"ADMIN", "READ_ONLY", "STAFF"});
 
-        createButton = new JButton("Create");
+        JButton createButton = new JButton("Create");
         createButton.addActionListener(e -> createButtonClicked());
 
         add(new JLabel("Username:"));
@@ -51,20 +52,24 @@ public class CreateUserScreen extends JFrame {
         String password = new String(passwordField.getPassword());
         String role = roleDropdown.getSelectedItem().toString();
 
+        //Validation
         if (username.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(this, "All fields required");
             return;
         }
 
-        //Enforce password rules before hashing, return if validation failed
-        if (!isPasswordValid(password)) {
+        // Validate password
+        String validationMessage = PasswordUtil.getPasswordValidationMessage(password);
+        if (validationMessage != null) {
+            JOptionPane.showMessageDialog(this, validationMessage);
             return;
         }
 
+        //Update DB
         try {
 
             //Create user in DB
-            User newUser = userDAO.createUser(username, password, role);
+            User newUser = userDAO.createUser(currentUser, username, password, role);
 
             if (newUser != null) {
                 JOptionPane.showMessageDialog(this, "User created successfully");
@@ -79,32 +84,6 @@ public class CreateUserScreen extends JFrame {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error creating user");
         }
-    }
-
-
-    private boolean isPasswordValid(String password) {
-        if (password.length() < 8) {
-            JOptionPane.showMessageDialog(this, "Password must be at least 8 characters long");
-            return false;
-        }
-        if (!password.matches(".*[A-Z].*")) {
-            JOptionPane.showMessageDialog(this, "Password must contain at least one uppercase letter");
-            return false;
-        }
-        if (!password.matches(".*[a-z].*")) {
-            JOptionPane.showMessageDialog(this, "Password must contain at least one lowercase letter");
-            return false;
-        }
-        if (!password.matches(".*\\d.*")) {
-            JOptionPane.showMessageDialog(this, "Password must contain at least one number");
-            return false;
-        }
-        if (!password.matches(".*[!@#$%^&*(),.?\":{}|<>].*")) {
-            JOptionPane.showMessageDialog(this, "Password must contain at least one special character");
-            return false;
-        }
-
-        return true;
     }
 
 }

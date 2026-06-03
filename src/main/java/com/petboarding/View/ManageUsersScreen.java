@@ -10,7 +10,6 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.List;
 
 public class ManageUsersScreen extends JFrame {
 
@@ -30,32 +29,35 @@ public class ManageUsersScreen extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-
-
+        //Build table to add into scoll pane
         buildTableModel();
-        userTable = new JTable(tableModel);
+        userTable = new JTable(tableModel);   // must be created BEFORE configuring widths
         configureColumnWidths();
         loadUsersIntoTable();
         addListeners();
 
-
-
-
-
-        add(new JScrollPane(userTable), BorderLayout.CENTER);
-
-        // Bottom panel with Add User button
+        //Bottom panel with Create + Edit buttons
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton addUserBtn = new JButton("Add User");
+        JButton addUserBtn = new JButton("Create User");
+        JButton editUserBtn = new JButton("Edit User");
+        bottom.add(addUserBtn);
+        bottom.add(editUserBtn);
 
+        //Button click listeners
         addUserBtn.addActionListener(e ->
-                new CreateUserScreen(userRepository, ManageUsersScreen.this).setVisible(true)
+                new CreateUserScreen(currentUser, userRepository, this).setVisible(true)
         );
 
-        bottom.add(addUserBtn);
+        editUserBtn.addActionListener(e -> openSelectedUser());
+
+        //Construct layout
+        add(new JScrollPane(userTable), BorderLayout.CENTER);
         add(bottom, BorderLayout.SOUTH);
     }
 
+    /*
+        -----------------Table building and data loading methods-----------------------------
+     */
     private void buildTableModel() {
         tableModel = new DefaultTableModel(cols, 0) {
             @Override
@@ -66,9 +68,9 @@ public class ManageUsersScreen extends JFrame {
     }
 
     private void configureColumnWidths() {
-        userTable.getColumnModel().getColumn(0).setPreferredWidth(50);  //ID
-        userTable.getColumnModel().getColumn(1).setPreferredWidth(50);  //username
-        userTable.getColumnModel().getColumn(2).setPreferredWidth(50);  //role
+        userTable.getColumnModel().getColumn(0).setPreferredWidth(80);  // ID
+        userTable.getColumnModel().getColumn(1).setPreferredWidth(150); // Username
+        userTable.getColumnModel().getColumn(2).setPreferredWidth(100); // Role
     }
 
     private void addListeners() {
@@ -83,36 +85,6 @@ public class ManageUsersScreen extends JFrame {
         });
     }
 
-    private void openSelectedUser() {
-        int viewRow = userTable.getSelectedRow();
-        if (viewRow < 0) return;
-
-        int modelRow = userTable.convertRowIndexToModel(viewRow);
-
-        int userId = Integer.parseInt(
-                userTable.getModel().getValueAt(modelRow, 0).toString()
-        );
-
-        User selected = userRepository.getUserById(userId);
-        if (selected != null) {
-            //new EditUserScreen(selected, userRepository, this).setVisible(true);
-        }
-    }
-
-    // Refresh table after add/edit
-    public void refreshTable() {
-        DefaultTableModel model = (DefaultTableModel) userTable.getModel();
-        model.setRowCount(0);
-
-        for (User user : userRepository.getUserList()) {
-            model.addRow(new Object[]{
-                    user.getId(),
-                    user.getUsername(),
-                    user.getRole()
-            });
-        }
-    }
-
     public void loadUsersIntoTable() {
         tableModel.setRowCount(0);
 
@@ -124,4 +96,41 @@ public class ManageUsersScreen extends JFrame {
             });
         }
     }
+
+    /*
+        -----------------Other functions--------------------------------
+     */
+    private void openSelectedUser() {
+        int viewRow = userTable.getSelectedRow();
+        if (viewRow < 0) {
+            JOptionPane.showMessageDialog(this, "Please select a user first");
+            return;
+        }
+
+        int modelRow = userTable.convertRowIndexToModel(viewRow);
+
+        int userId = Integer.parseInt(
+                userTable.getModel().getValueAt(modelRow, 0).toString()
+        );
+
+        User selectedUser = userRepository.getUserById(userId);
+        if (selectedUser != null) {
+            new EditUserScreen(currentUser, selectedUser, userRepository, this).setVisible(true);
+        }
+    }
+
+    // Refresh table after add/edit
+    public void refreshTable() {
+        tableModel.setRowCount(0);
+
+        for (User user : userRepository.getUserList()) {
+            tableModel.addRow(new Object[]{
+                    user.getId(),
+                    user.getUsername(),
+                    user.getRole()
+            });
+        }
+    }
+
+
 }

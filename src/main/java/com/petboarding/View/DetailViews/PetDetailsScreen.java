@@ -7,8 +7,13 @@ import com.petboarding.Models.Owner;
 import com.petboarding.Models.Pet;
 import com.petboarding.Database.PetDAO;
 import com.petboarding.Models.User;
+import com.petboarding.Repository.PetRepository;
+import com.petboarding.Repository.StayRepository;
+import com.petboarding.View.CreateViews.CheckInStayScreen;
+import com.petboarding.View.DataViews.CurrentStaysTablePanel;
 import com.petboarding.View.EditViews.EditPetScreen;
 import javax.swing.*;
+import java.sql.SQLException;
 import java.util.List;
 
 public class PetDetailsScreen extends JFrame {
@@ -19,11 +24,24 @@ public class PetDetailsScreen extends JFrame {
     private String currentlyBoarded = "";
     private Pet pet;
 
+    private final StayRepository stayRepository;
+    private final CurrentStaysTablePanel currentStaysTablePanel;
+    private final PetRepository petRepository;
+
 
     //Construct pet details screen
-    public PetDetailsScreen(Pet pet, User user, OwnerRepository ownerRepository) {
+    public PetDetailsScreen(
+            Pet pet,
+            User user,
+            OwnerRepository ownerRepository,
+            StayRepository stayRepository,
+            CurrentStaysTablePanel currentStaysTablePanel,
+            PetRepository petRepository) throws SQLException {
         this.currentUser = user;
         this.pet = pet;
+        this.stayRepository = stayRepository;
+        this.currentStaysTablePanel = currentStaysTablePanel;
+        this.petRepository = petRepository;
         Owner owner = ownerRepository.getOwnerById(pet.getOwnerId());
         setTitle("Pet Details - " + pet.getName());
         setSize(400, 700);
@@ -59,6 +77,17 @@ public class PetDetailsScreen extends JFrame {
 
         loadStayHistory();
 
+        if ((currentUser.isStaff() || currentUser.isAdmin()) && currentlyBoarded.equalsIgnoreCase("NO")) {
+            JButton checkInButton = new JButton("Check In");
+
+            checkInButton.addActionListener(e -> {
+                new CheckInStayScreen(pet, currentUser, stayRepository, currentStaysTablePanel, this).setVisible(true);
+            });
+
+            panel.add(Box.createVerticalStrut(10));
+            panel.add(checkInButton);
+        }
+
         /*
             Check if current user is an ADMIN and display appropriate buttons
          */
@@ -86,7 +115,7 @@ public class PetDetailsScreen extends JFrame {
     }
 
     //Load this pet's stays history from database
-    private void loadStayHistory() {
+    private void loadStayHistory() throws SQLException {
         staysPanel.removeAll();
 
         List<String> stays = PetDAO.getStayHistory(pet.getPetId());
@@ -104,7 +133,7 @@ public class PetDetailsScreen extends JFrame {
     }
 
     //Refresh details in UI
-    public void refreshDetails() {
+    public void refreshDetails() throws SQLException {
         nameLabel.setText("Name: " + pet.getName());
         speciesLabel.setText("Species: " + pet.getSpecies());
         ageLabel.setText("Age: " + pet.getAge());
@@ -113,7 +142,7 @@ public class PetDetailsScreen extends JFrame {
         loadStayHistory();
     }
 
-    public void setCurrentlyBoarded() {
+    public void setCurrentlyBoarded() throws SQLException {
         if (PetDAO.isPetCurrentlyBoarded(pet.getPetId())) {
             currentlyBoarded = "Yes";
         }

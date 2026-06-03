@@ -7,8 +7,7 @@ public class User {
     private String passwordHash;
     private String salt;
     private String role;
-    private boolean isAdmin;
-    private boolean isReadOnly;
+    private boolean isAdmin, isStaff, isReadOnly;
 
     //Default constructor
     public User() {}
@@ -19,6 +18,16 @@ public class User {
         this.passwordHash = passwordHash;
         this.salt = salt;
         this.role = role;
+
+        if (role.equals("ADMIN")) {
+            this.isAdmin = true;
+        }
+        else if (role.equals("STAFF")) {
+            this.isStaff = true;
+        }
+        else if (role.equals("READ_ONLY")) {
+            this.isReadOnly = true;
+        }
     }
 
     /*
@@ -68,11 +77,24 @@ public class User {
         return isAdmin;
     }
 
+    public boolean isStaff() {
+        return isStaff;
+    }
+
+    public boolean isReadOnly() {
+        return isReadOnly;
+    }
+
     public void setAdmin(boolean isAdmin) {
         this.isAdmin = isAdmin;
     }
 
-    public boolean isReadOnly() {
-        return role.equals("READ_ONLY");
+    public void setStaff(boolean isStaff) {
+        this.isStaff = isStaff;
     }
+
+    public void setReadOnly(boolean isReadOnly) {
+        this.isReadOnly = isReadOnly;
+    }
+
 }

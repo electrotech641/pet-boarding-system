@@ -26,10 +26,31 @@ public class AuthenticationService {
 
         if (valid) {
 
-            if (user.getRole().equalsIgnoreCase("ADMIN")) {
-                user.setAdmin(true);
-            } else {
-                user.setAdmin(false);
+            String role = user.getRole();
+
+            //Reset all flags first
+            user.setAdmin(false);
+            user.setStaff(false);
+            user.setReadOnly(false);
+
+            //Set correct flag based on role
+            switch (role) {
+                case "ADMIN":
+                    user.setAdmin(true);
+                    break;
+
+                case "STAFF":
+                    user.setStaff(true);
+                    break;
+
+                case "READ_ONLY":
+                    user.setReadOnly(true);
+                    break;
+
+                default:
+                    //handle unexpected roles
+                    user.setReadOnly(true);
+                    break;
             }
             return user;
         } else {

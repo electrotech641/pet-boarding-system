@@ -12,8 +12,8 @@ import com.petboarding.Utilities.SortUtil;
 
 public class OwnerRepository {
 
-    private ArrayList<Owner> ownerList = new ArrayList<>();
-    private HashMap<Integer, Owner> ownerMap = new HashMap<>();
+    private final ArrayList<Owner> ownerList = new ArrayList<>();
+    private final HashMap<Integer, Owner> ownerMap = new HashMap<>();
 
     public ArrayList<Owner> getOwnerList() {
         return ownerList;

@@ -4,10 +4,7 @@ import com.petboarding.Models.Pet;
 import com.petboarding.Repository.PetRepository;
 
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,7 +13,7 @@ public class PetDAO {
     /*
         Load pets into memory
      */
-    public static void loadPets(PetRepository petRepository) {
+    public static void loadPets(PetRepository petRepository) throws SQLException {
 
         String sql = "SELECT * FROM pets";
 
@@ -38,15 +35,13 @@ public class PetDAO {
             }
 
             System.out.println("Loaded " + petRepository.getPetList().size() + " pets into memory.");
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
     /*
         Get a pets stay history by ID
      */
-    public static List<String> getStayHistory(int petId) {
+    public static List<String> getStayHistory(int petId) throws SQLException {
         List<String> stayHistory = new ArrayList<>();
 
         String sql = "SELECT check_in, check_out, grooming FROM stays WHERE pet_id = ? ORDER BY check_in DESC";
@@ -70,14 +65,12 @@ public class PetDAO {
                 stayHistory.add(entry);
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
         return stayHistory;
     }
 
-    public static void updatePet(Pet pet) {
+    public static void updatePet(Pet pet) throws SQLException {
         String sql = "UPDATE pets SET name = ?, species = ?, age = ?, notes = ? WHERE pet_id = ?";
 
         try (Connection connection = DatabaseManager.getConnection();
@@ -91,12 +84,10 @@ public class PetDAO {
 
             statement.executeUpdate();
 
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
-    public static int addPet(Pet pet) {
+    public static int addPet(Pet pet) throws SQLException {
         String sql = "INSERT INTO pets (owner_id, name, species, age, notes) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection connection = DatabaseManager.getConnection();
@@ -118,15 +109,13 @@ public class PetDAO {
                 }
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
         return -1;
     }
 
 
-    public static boolean isPetCurrentlyBoarded(int petId) {
+    public static boolean isPetCurrentlyBoarded(int petId) throws SQLException {
         String sql = "SELECT COUNT(*) FROM stays " +
                 "WHERE pet_id = ? AND status = 'In Progress'";
 
@@ -141,8 +130,6 @@ public class PetDAO {
                 return rs.getInt(1) > 0;
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
         //Query returned no results, return false, pet currently not boarded

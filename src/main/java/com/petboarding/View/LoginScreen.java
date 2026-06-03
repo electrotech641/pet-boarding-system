@@ -102,7 +102,7 @@ public class LoginScreen extends JFrame {
 
         try {
             // Call your DAO method that generates salt + hash internally
-            User newUser = userDAO.createUser(username, password, "READ_ONLY");
+            User newUser = userDAO.createUser(null, username, password, "READ_ONLY");
 
             if (newUser != null) {
                 JOptionPane.showMessageDialog(this, "User created successfully");

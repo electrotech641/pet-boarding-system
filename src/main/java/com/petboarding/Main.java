@@ -8,6 +8,10 @@ import com.petboarding.View.LoginScreen;
 
 public class Main {
 
+    //CHANGE THESE BEFORE INITIAL BOOT FOR DEFAULT ADMIN ACCOUNT
+    private static final String defaultAdmin = "admin";
+    private static final String defaultAdminPw = "admin";
+
     public static void main(String[] args) {
 
         /*
@@ -46,19 +50,15 @@ public class Main {
     private static void createDefaultAdminUser() {
         UserDAO userDAO = new UserDAO();
 
-        /*
-            Search for existing "admin" user, if none exists, creates it with default password
-
-         */
         try {
             User existing = userDAO.findByUsername("admin");
 
             if (existing == null) {
-                System.out.println("No admin user found - creating default admin user");
+                System.out.println("No admin user found — creating default admin user");
 
-                userDAO.createUser("admin", "admin", "ADMIN");   //Change this to desired admin password
+                userDAO.createDefaultAdminUser("admin", "admin");
 
-                System.out.println("Created default admin, username: admin, password: admin");
+                System.out.println("Created default admin: username= " + defaultAdmin + " password= " + defaultAdminPw);
             }
 
         } catch (Exception e) {
@@ -66,4 +66,5 @@ public class Main {
             System.out.println("Failed to create default admin user");
         }
     }
+
 }

@@ -33,4 +33,15 @@ public class UserRepository {
         userMap.remove(userId);
         userList.removeIf(user -> user.getId() == userId);
     }
+
+    public void updateUser(User user) {
+        userMap.put(user.getId(), user);
+
+        for (int i = 0; i < userList.size(); i++) {
+            if (userList.get(i).getId() == user.getId()) {
+                userList.set(i, user);
+                break;
+            }
+        }
+    }
 }

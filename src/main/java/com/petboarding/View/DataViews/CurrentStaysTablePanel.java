@@ -236,7 +236,7 @@ public class CurrentStaysTablePanel extends JPanel {
         if (stay != null) {
             new StayDetailsScreen(
                     stay,
-                    currentUser,
+                    currentUser, stayRepository,
                     petRepository,
                     ownerRepository,
                     CurrentStaysTablePanel.this

@@ -3,6 +3,9 @@ package com.petboarding.View.SearchResultsViews;
 import com.petboarding.Models.Pet;
 import com.petboarding.Models.User;
 import com.petboarding.Repository.OwnerRepository;
+import com.petboarding.Repository.PetRepository;
+import com.petboarding.Repository.StayRepository;
+import com.petboarding.View.DataViews.CurrentStaysTablePanel;
 import com.petboarding.View.DetailViews.PetDetailsScreen;
 
 import javax.swing.*;
@@ -10,6 +13,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.sql.SQLException;
 import java.util.List;
 
 public class PetSearchResultsScreen extends JFrame {
@@ -18,11 +22,22 @@ public class PetSearchResultsScreen extends JFrame {
     private List<Pet> pets;
     private User currentUser;
     private OwnerRepository ownerRepository;
+    private final StayRepository stayRepository;
+    private final CurrentStaysTablePanel currentStaysTablePanel;
+    private final PetRepository petRepository;
 
-    public PetSearchResultsScreen(List<Pet> pets, User currentUser, OwnerRepository ownerRepository) {
+    public PetSearchResultsScreen(List<Pet> pets,
+                                  User currentUser,
+                                  OwnerRepository ownerRepository,
+                                  StayRepository stayRepository,
+                                  CurrentStaysTablePanel currentStaysTablePanel,
+                                  PetRepository petRepository) {
         this.pets = pets;
         this.currentUser = currentUser;
         this.ownerRepository = ownerRepository;
+        this.stayRepository = stayRepository;
+        this.currentStaysTablePanel = currentStaysTablePanel;
+        this.petRepository = petRepository;
 
         setTitle("Search Results (" + pets.size() + " found)");
         setSize(500, 300);
@@ -59,7 +74,11 @@ public class PetSearchResultsScreen extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
-                    openSelectedPet();
+                    try {
+                        openSelectedPet();
+                    } catch (SQLException ex) {
+                        throw new RuntimeException(ex);
+                    }
                 }
             }
         });
@@ -71,7 +90,7 @@ public class PetSearchResultsScreen extends JFrame {
         add(closeButton, BorderLayout.SOUTH);
     }
 
-    private void openSelectedPet() {
+    private void openSelectedPet() throws SQLException {
         int viewRow = table.getSelectedRow();
         if (viewRow < 0) return;
 
@@ -92,7 +111,7 @@ public class PetSearchResultsScreen extends JFrame {
         }
 
         if (selected != null) {
-            new PetDetailsScreen(selected, currentUser, ownerRepository).setVisible(true);
+            new PetDetailsScreen(selected, currentUser, ownerRepository, stayRepository, currentStaysTablePanel, petRepository).setVisible(true);
         }
     }
 }

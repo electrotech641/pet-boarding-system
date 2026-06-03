@@ -61,9 +61,18 @@ public class StayRepository {
         stayList.add(left, stay);
     }
 
-    public void removeStayById(int stayId) {
+    public void removeStay(int stayId) {
         stayList.removeIf(s -> s.getStayId() == stayId);        //Most efficient for this data structure
         stayMap.remove(stayId);
+    }
+
+    public void updateStay(Stay updateStay) {
+        for (int i = 0; i < stayList.size(); i++) {
+            if (stayList.get(i).getStayId() == updateStay.getStayId()) {
+                stayList.set(i, updateStay);
+                return;
+            }
+        }
     }
 
 }
