@@ -1,5 +1,5 @@
 //Packages
-package com.petboarding.View;
+package com.petboarding.View.EditViews;
 
 //Imports
 import com.petboarding.Models.Stay;

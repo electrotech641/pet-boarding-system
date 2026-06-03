@@ -41,6 +41,10 @@ public class Pet {
         Setters
      */
 
+    public void setPetId(int id) {
+        this.id = id;
+    }
+
     public void setName(String name) {
         this.name = name;
     }

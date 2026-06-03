@@ -12,6 +12,7 @@ public class StayDAO {
 
 
     public static void loadCurrentStays(StayRepository stayRepository) {
+
         String sql = "SELECT stay_id, pet_id, check_in, check_out, daily_rate, grooming, total_cost, status " +
                 "FROM stays WHERE status = 'In Progress'";
 

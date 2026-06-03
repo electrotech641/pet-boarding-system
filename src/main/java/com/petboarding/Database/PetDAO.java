@@ -7,6 +7,7 @@ import com.petboarding.Repository.PetRepository;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +17,7 @@ public class PetDAO {
         Load pets into memory
      */
     public static void loadPets(PetRepository petRepository) {
+
         String sql = "SELECT * FROM pets";
 
         try (Connection connection = DatabaseManager.getConnection();
@@ -47,7 +49,7 @@ public class PetDAO {
     public static List<String> getStayHistory(int petId) {
         List<String> stayHistory = new ArrayList<>();
 
-        String sql = "SELECT check_in, check_out, grooming FROM stays WHERE pet_id = ?";
+        String sql = "SELECT check_in, check_out, grooming FROM stays WHERE pet_id = ? ORDER BY check_in DESC";
 
         try (Connection connection = DatabaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -93,6 +95,36 @@ public class PetDAO {
             e.printStackTrace();
         }
     }
+
+    public static int addPet(Pet pet) {
+        String sql = "INSERT INTO pets (owner_id, name, species, age, notes) VALUES (?, ?, ?, ?, ?)";
+
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, pet.getOwnerId());
+            statement.setString(2, pet.getName());
+            statement.setString(3, pet.getSpecies());
+            statement.setInt(4, pet.getAge());
+            statement.setString(5, pet.getNotes());
+
+            statement.executeUpdate();
+
+            // Retrieve auto-generated ID
+            try (Statement newStatement = connection.createStatement();
+                 ResultSet rs = newStatement.executeQuery("SELECT last_insert_rowid()")) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return -1;
+    }
+
 
     public static boolean isPetCurrentlyBoarded(int petId) {
         String sql = "SELECT COUNT(*) FROM stays " +

@@ -2,6 +2,7 @@
 package com.petboarding.View;
 
 //Imports
+import com.petboarding.Database.UserDAO;
 import com.petboarding.Models.User;
 import com.petboarding.Services.AuthenticationService;
 import javax.swing.*;
@@ -13,6 +14,7 @@ public class LoginScreen extends JFrame {
     private JTextField usernameField;
     private JPasswordField passwordField;
     private AuthenticationService authService = new AuthenticationService();
+    private UserDAO userDAO = new UserDAO();
 
     public LoginScreen() {
 
@@ -74,8 +76,8 @@ public class LoginScreen extends JFrame {
 
                 MainScreen mainView = new MainScreen(user);
                 mainView.setVisible(true);
-                mainView.loadPetData();
                 mainView.loadOwnerData();
+                mainView.loadPetData();
                 mainView.loadStaysData();
                 dispose();
 
@@ -90,7 +92,7 @@ public class LoginScreen extends JFrame {
     }
 
     private void handleCreateAccount() {
-        String username = usernameField.getText();
+        String username = usernameField.getText().trim();
         String password = String.valueOf(passwordField.getPassword());
 
         if (username.isEmpty() || password.isEmpty()) {
@@ -99,15 +101,16 @@ public class LoginScreen extends JFrame {
         }
 
         try {
-            boolean success = authService.createUser(username, password, "READ_ONLY");
+            // Call your DAO method that generates salt + hash internally
+            User newUser = userDAO.createUser(username, password, "READ_ONLY");
 
-            if (success) {
+            if (newUser != null) {
                 JOptionPane.showMessageDialog(this, "User created successfully");
-                handleLogin();
-            }
-            else {
+                handleLogin(); // log them in immediately
+            } else {
                 JOptionPane.showMessageDialog(this, "User creation failed");
             }
+
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Database Error");

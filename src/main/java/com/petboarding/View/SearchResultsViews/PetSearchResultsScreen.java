@@ -1,0 +1,98 @@
+package com.petboarding.View.SearchResultsViews;
+
+import com.petboarding.Models.Pet;
+import com.petboarding.Models.User;
+import com.petboarding.Repository.OwnerRepository;
+import com.petboarding.View.DetailViews.PetDetailsScreen;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.List;
+
+public class PetSearchResultsScreen extends JFrame {
+
+    private JTable table;
+    private List<Pet> pets;
+    private User currentUser;
+    private OwnerRepository ownerRepository;
+
+    public PetSearchResultsScreen(List<Pet> pets, User currentUser, OwnerRepository ownerRepository) {
+        this.pets = pets;
+        this.currentUser = currentUser;
+        this.ownerRepository = ownerRepository;
+
+        setTitle("Search Results (" + pets.size() + " found)");
+        setSize(500, 300);
+        setLocationRelativeTo(null);
+
+        setLayout(new BorderLayout());
+
+        //Table model
+        String[] cols = {"Pet ID", "Name", "Species", "Age", "Owner"};
+        DefaultTableModel model = new DefaultTableModel(cols, 0) {
+            @Override
+            public boolean isCellEditable(int row, int col) {
+                return false;
+            }
+        };
+
+        //Construct the table view of results
+        for (Pet pet : pets) {
+            String ownerName = ownerRepository.getOwnerById(pet.getOwnerId()).getName();
+
+            model.addRow(new Object[]{
+                    pet.getPetId(),
+                    pet.getName(),
+                    pet.getSpecies(),
+                    pet.getAge(),
+                    ownerName
+            });
+        }
+
+        table = new JTable(model);
+
+        // Double-click listener
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    openSelectedPet();
+                }
+            }
+        });
+
+        add(new JScrollPane(table), BorderLayout.CENTER);
+
+        JButton closeButton = new JButton("Close");
+        closeButton.addActionListener(e -> dispose());
+        add(closeButton, BorderLayout.SOUTH);
+    }
+
+    private void openSelectedPet() {
+        int viewRow = table.getSelectedRow();
+        if (viewRow < 0) return;
+
+        //Convert view row to model row
+        //Initially did not do this, had a bug when user dragged ID column before selecting
+        int modelRow = table.convertRowIndexToModel(viewRow);
+
+        //PetId is always column 0 in the model row
+        int petId = Integer.parseInt(table.getModel().getValueAt(modelRow, 0).toString());
+
+        Pet selected = null;
+
+        for (Pet pet : pets) {
+            if (pet.getPetId() == petId) {
+                selected = pet;
+                break;
+            }
+        }
+
+        if (selected != null) {
+            new PetDetailsScreen(selected, currentUser, ownerRepository).setVisible(true);
+        }
+    }
+}

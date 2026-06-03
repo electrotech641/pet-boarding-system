@@ -1,14 +1,18 @@
+//Package
 package com.petboarding.View.DataViews;
 
+//Imports
+import com.petboarding.Models.Pet;
 import com.petboarding.Repository.OwnerRepository;
 import com.petboarding.Repository.PetRepository;
-import com.petboarding.Repository.StayRepository;;
+import com.petboarding.Repository.StayRepository;
 import com.petboarding.Models.Stay;
 import com.petboarding.Models.User;
 import com.petboarding.View.DetailViews.StayDetailsScreen;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.util.Comparator;
@@ -17,19 +21,26 @@ public class CurrentStaysTablePanel extends JPanel {
 
     private JTable staysTable;
     private DefaultTableModel tableModel;
-    private StayRepository stayRepository;
-    private PetRepository petRepository;
-    private OwnerRepository ownerRepository;
-    private User currentUser;
-    private JLabel statusLabel;
 
-    private int lastSortedColumn = -1;
+    private final StayRepository stayRepository;
+    private final PetRepository petRepository;
+    private final OwnerRepository ownerRepository;
+    private final User currentUser;
+    private final JLabel statusLabel;
+
+    private int lastSortedModelColumn = -1;
     private boolean ascending = true;
+
+    private static final String[] COLUMNS = {
+            "Stay ID", "Pet (ID)", "Check-In", "Check-Out",
+            "Daily Rate", "Grooming", "Total Cost", "Status"
+    };
 
     public CurrentStaysTablePanel(StayRepository stayRepository,
                                   PetRepository petRepository,
                                   OwnerRepository ownerRepository,
-                                  User user, JLabel statusLabel) {
+                                  User user,
+                                  JLabel statusLabel) {
 
         this.stayRepository = stayRepository;
         this.petRepository = petRepository;
@@ -38,61 +49,76 @@ public class CurrentStaysTablePanel extends JPanel {
         this.statusLabel = statusLabel;
 
         setLayout(new BorderLayout());
-        setPreferredSize(new Dimension(1000, 220)); // Good height for top panel
+        setPreferredSize(new Dimension(1000, 220));
 
-        String[] columns = {
-                "Stay ID", "Pet ID", "Check-In", "Check-Out", "Daily Rate",
-                "Grooming", "Total Cost", "Status"
-        };
+        buildTableModel();
+        buildTable();
+        configureColumnWidths();
+        loadStaysIntoTable(stayRepository);
+        addListeners();
 
-        tableModel = new DefaultTableModel(columns, 0) {
+        add(new JScrollPane(staysTable), BorderLayout.CENTER);
+
+    }
+
+    // ------------------------------------------------------------
+    // UI SETUP
+    // ------------------------------------------------------------
+
+    private void buildTableModel() {
+        tableModel = new DefaultTableModel(COLUMNS, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
                 return false;
             }
         };
+    }
 
+    private void buildTable() {
         staysTable = new JTable(tableModel);
         staysTable.setFillsViewportHeight(true);
         staysTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+    }
 
-        // Column widths
-        staysTable.getColumnModel().getColumn(0).setPreferredWidth(70);   //stay_id
-        staysTable.getColumnModel().getColumn(1).setPreferredWidth(70);   //pet_id
-        staysTable.getColumnModel().getColumn(2).setPreferredWidth(150);  //check_in
-        staysTable.getColumnModel().getColumn(3).setPreferredWidth(150);  //check_out
-        staysTable.getColumnModel().getColumn(4).setPreferredWidth(150);  //daily_rate
-        staysTable.getColumnModel().getColumn(5).setPreferredWidth(90);   //grooming
-        staysTable.getColumnModel().getColumn(6).setPreferredWidth(120);  //total_cost
-        staysTable.getColumnModel().getColumn(7).setPreferredWidth(120);  //status
+    private void configureColumnWidths() {
+        staysTable.getColumnModel().getColumn(0).setPreferredWidth(70);   // Stay ID
+        staysTable.getColumnModel().getColumn(1).setPreferredWidth(120);   // PetName(ID)
+        staysTable.getColumnModel().getColumn(2).setPreferredWidth(120);  // Check-In
+        staysTable.getColumnModel().getColumn(3).setPreferredWidth(120);  // Check-Out
+        staysTable.getColumnModel().getColumn(4).setPreferredWidth(120);  // Daily Rate
+        staysTable.getColumnModel().getColumn(5).setPreferredWidth(90);   // Grooming
+        staysTable.getColumnModel().getColumn(6).setPreferredWidth(120);  // Total Cost
+        staysTable.getColumnModel().getColumn(7).setPreferredWidth(120);  // Status
+    }
 
-        loadStaysIntoTable(stayRepository);
+    private void addListeners() {
 
-        add(new JScrollPane(staysTable), BorderLayout.CENTER);
-
-        //Sorting Listener
+        // Sorting listener
         staysTable.getTableHeader().addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
-                int column = staysTable.columnAtPoint(e.getPoint());
 
-                if (column == lastSortedColumn) {
+                int viewColumn = staysTable.columnAtPoint(e.getPoint());
+                if (viewColumn < 0) return;
+
+                int modelColumn = staysTable.convertColumnIndexToModel(viewColumn);
+
+                if (modelColumn == lastSortedModelColumn) {
                     ascending = !ascending;
                 } else {
                     ascending = true;
                 }
-                lastSortedColumn = column;
+
+                lastSortedModelColumn = modelColumn;
 
                 long start = System.nanoTime();
-
-                sortByColumn(column);
+                sortByColumn(modelColumn);
                 updateColumnHeader();
-
                 long end = System.nanoTime();
-                double ms = (end - start) / 1_000_000.0;
 
+                double ms = (end - start) / 1_000_000.0;
                 String direction = ascending ? "ascending" : "descending";
-                String colName = staysTable.getColumnName(column);
+                String colName = staysTable.getColumnName(viewColumn);
 
                 statusLabel.setText(
                         "Sorted stays by " + colName + " (" + direction + ") in " + String.format("%.3f ms", ms)
@@ -100,38 +126,37 @@ public class CurrentStaysTablePanel extends JPanel {
             }
         });
 
-        //Double click to open StayDetailsScreen
-        staysTable.addMouseListener(new java.awt.event.MouseAdapter() {
+        // Double-click listener
+        staysTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
+
                 if (e.getClickCount() == 2) {
-
-                    int row = staysTable.getSelectedRow();
-                    if (row < 0) return;
-
-                    // Assuming column 0 is Stay ID
-                    int stayId = (int) staysTable.getValueAt(row, 0);
-
-                    Stay stay = stayRepository.getStayById(stayId);
-                    if (stay == null) {
-                        JOptionPane.showMessageDialog(null, "Error: Stay not found.");
-                        return;
-                    }
-
-                    new StayDetailsScreen(stay, currentUser, petRepository, ownerRepository).setVisible(true);
-
+                    openSelectedStay(currentUser);
                 }
             }
         });
     }
 
+    /*
+        -----------------Data loading + Sorting methods-------------------------
+     */
+
     public void loadStaysIntoTable(StayRepository stayRepository) {
         tableModel.setRowCount(0);
 
         for (Stay stay : stayRepository.getStayList()) {
+
+            String petName = "Unknown";
+            Pet pet = petRepository.getPetById(stay.getPetId());
+            if (pet != null) {
+                petName = pet.getName();
+            }
+
+            String petLabel = petName + " (" + stay.getPetId() + ")";
             tableModel.addRow(new Object[]{
                     stay.getStayId(),
-                    stay.getPetId(),
+                    petLabel,
                     stay.getCheckInDate(),
                     stay.getCheckOutDate(),
                     stay.getDailyRate(),
@@ -143,79 +168,86 @@ public class CurrentStaysTablePanel extends JPanel {
     }
 
     private void sortByColumn(int columnIndex) {
-        Comparator<Stay> comparator = null;
+        Comparator<Stay> comparator = getComparator(columnIndex);
 
-        switch (columnIndex) {
-            case 0: // Stay ID
-                comparator = ascending
-                        ? Comparator.comparingInt(Stay::getStayId)
-                        : (a, b) -> Integer.compare(b.getStayId(), a.getStayId());
-                break;
-
-            case 1: // Pet ID
-                comparator = ascending
-                        ? Comparator.comparingInt(Stay::getPetId)
-                        : (a, b) -> Integer.compare(b.getPetId(), a.getPetId());
-                break;
-
-            case 2: // Check-In
-                comparator = ascending
-                        ? Comparator.comparing(Stay::getCheckInDate)
-                        : (a, b) -> b.getCheckInDate().compareTo(a.getCheckInDate());
-                break;
-
-            case 3: // Check-Out
-                comparator = ascending
-                        ? Comparator.comparing(Stay::getCheckOutDate, Comparator.nullsLast(String::compareTo))
-                        : (a, b) -> Comparator.nullsLast(String::compareTo)
-                        .compare(b.getCheckOutDate(), a.getCheckOutDate());
-                break;
-
-            case 4: // Daily Rate
-                comparator = ascending
-                        ? Comparator.comparingDouble(Stay::getDailyRate)
-                        : (a, b) -> Double.compare(b.getDailyRate(), a.getDailyRate());
-                break;
-
-            case 5: // Grooming
-                comparator = ascending
-                        ? Comparator.comparingInt(Stay::getGrooming)
-                        : (a, b) -> Integer.compare(b.getGrooming(), a.getGrooming());
-                break;
-
-            case 6: // Total Cost
-                comparator = ascending
-                        ? Comparator.comparingDouble(Stay::getTotalCost)
-                        : (a, b) -> Double.compare(b.getTotalCost(), a.getTotalCost());
-                break;
-
-            case 7: // Status
-                comparator = ascending
-                        ? Comparator.comparing(Stay::getStatus)
-                        : (a, b) -> b.getStatus().compareTo(a.getStatus());
-                break;
-        }
+        if (comparator == null) return;
+        if (!ascending) comparator = comparator.reversed();
 
         stayRepository.sortStaysBy(comparator);
         loadStaysIntoTable(stayRepository);
     }
 
-    private void updateColumnHeader() {
-        String[] columns = {
-                "Stay ID", "Pet ID", "Check-In", "Check-Out", "Daily Rate",
-                "Grooming", "Total Cost", "Status"
-        };
-
-        for (int i = 0; i < columns.length; i++) {
-            if (i == lastSortedColumn) {
-                staysTable.getColumnModel().getColumn(i).setHeaderValue(
-                        columns[i] + (ascending ? " ▲" : " ▼")
+    private Comparator<Stay> getComparator(int columnIndex) {
+        switch (columnIndex) {
+            case 0: return Comparator.comparingInt(Stay::getStayId);
+            //Sort this column by pet name instead of ID
+            case 1:
+                return Comparator.comparing(
+                        stay -> {
+                            var pet = petRepository.getPetById(stay.getPetId());
+                            return pet != null ? pet.getName() : "";
+                        },
+                        String.CASE_INSENSITIVE_ORDER
                 );
-            } else {
-                staysTable.getColumnModel().getColumn(i).setHeaderValue(columns[i]);
+            case 2: return Comparator.comparing(Stay::getCheckInDate);
+            //When ascending, push null check_out stays to the end
+            case 3: return Comparator.comparing(Stay::getCheckOutDate, Comparator.nullsLast(String::compareTo));
+            case 4: return Comparator.comparingDouble(Stay::getDailyRate);
+            case 5: return Comparator.comparingInt(Stay::getGrooming);
+            case 6: return Comparator.comparingDouble(Stay::getTotalCost);
+            case 7: return Comparator.comparing(Stay::getStatus);
+
+            default:
+                return null;
+        }
+    }
+
+    private void updateColumnHeader() {
+
+        for (int viewIndex = 0; viewIndex < staysTable.getColumnCount(); viewIndex++) {
+
+            TableColumn column = staysTable.getColumnModel().getColumn(viewIndex);
+            int modelIndex = staysTable.convertColumnIndexToModel(viewIndex);
+
+            String baseHeader = COLUMNS[modelIndex];
+
+            if (modelIndex == lastSortedModelColumn) {
+                baseHeader += ascending ? " ▲" : " ▼";
             }
+
+            column.setHeaderValue(baseHeader);
         }
 
         staysTable.getTableHeader().repaint();
+    }
+
+    private void openSelectedStay(User currentUser) {
+        int viewRow = staysTable.getSelectedRow();
+        if (viewRow < 0) return;
+
+        //Convert view row to model row
+        //Initially did not do this, had a bug when user dragged ID column before selecting
+        int modelRow = staysTable.convertRowIndexToModel(viewRow);
+
+        //StayId is always column 0 in the model row
+        int stayId = (int) staysTable.getModel().getValueAt(modelRow, 0);
+
+        Stay stay = stayRepository.getStayById(stayId);
+        if (stay != null) {
+            new StayDetailsScreen(
+                    stay,
+                    currentUser,
+                    petRepository,
+                    ownerRepository,
+                    CurrentStaysTablePanel.this
+            ).setVisible(true);
+        }
+    }
+
+    /*
+        ------Getter Method-----
+     */
+    public StayRepository getStayRepository() {
+        return stayRepository;
     }
 }

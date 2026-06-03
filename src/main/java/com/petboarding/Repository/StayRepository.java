@@ -1,5 +1,7 @@
+//Package
 package com.petboarding.Repository;
 
+//Imports
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -58,4 +60,10 @@ public class StayRepository {
         // Insert at the correct sorted position
         stayList.add(left, stay);
     }
+
+    public void removeStayById(int stayId) {
+        stayList.removeIf(s -> s.getStayId() == stayId);        //Most efficient for this data structure
+        stayMap.remove(stayId);
+    }
+
 }

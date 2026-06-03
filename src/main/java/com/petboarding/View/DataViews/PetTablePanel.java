@@ -1,15 +1,15 @@
-//Packages
+//Package
 package com.petboarding.View.DataViews;
 
 //Imports
 import com.petboarding.Repository.OwnerRepository;
 import com.petboarding.Repository.PetRepository;
-import com.petboarding.Models.Pet;
-import com.petboarding.Models.User;
+import com.petboarding.Models.*;
 import com.petboarding.View.DetailViews.PetDetailsScreen;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -20,79 +20,90 @@ public class PetTablePanel extends JPanel {
     private JTable petTable;
     private DefaultTableModel tableModel;
     private PetRepository petRepository;
+    private OwnerRepository ownerRepository;
     private JLabel statusLabel;
 
-    //Track whether sorted ascending or descending
-    private int lastSortedColumn = -1;
+    private int lastSortedModelColumn = -1;
     private boolean ascending = true;
 
-    public PetTablePanel(PetRepository petRepository, OwnerRepository ownerRepository, User currentUser, JLabel statusLabel) {
+    private static final String[] COLUMNS =
+            {"ID", "Name", "Species", "Age", "Owner (ID)", "Notes"};
+
+    public PetTablePanel(PetRepository petRepository,
+                         OwnerRepository ownerRepository,
+                         User currentUser,
+                         JLabel statusLabel) {
 
         this.petRepository = petRepository;
+        this.ownerRepository = ownerRepository;
         this.statusLabel = statusLabel;
 
         setLayout(new BorderLayout());
 
-        //Column header labels
-        String[] columns = {"ID", "Name", "Species", "Age", "Owner ID", "Notes"};
+        buildTableModel();
+        buildTable();
+        configureColumnWidths();
+        loadPetsIntoTable(petRepository);
+        addListeners(currentUser);
 
-        //Read only table
-        tableModel = new DefaultTableModel(columns, 0) {
+        add(new JScrollPane(petTable), BorderLayout.CENTER);
+    }
+
+    /*
+        ---------------UI Builder Methods------------------------
+     */
+
+    private void buildTableModel() {
+        tableModel = new DefaultTableModel(COLUMNS, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
         };
+    }
 
+    private void buildTable() {
         petTable = new JTable(tableModel);
         petTable.setFillsViewportHeight(true);
         petTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+    }
 
-        petTable.getColumnModel().getColumn(0).setPreferredWidth(50);
-        petTable.getColumnModel().getColumn(1).setPreferredWidth(150);
-        petTable.getColumnModel().getColumn(2).setPreferredWidth(80);
-        petTable.getColumnModel().getColumn(3).setPreferredWidth(50);
-        petTable.getColumnModel().getColumn(4).setPreferredWidth(50);
-        petTable.getColumnModel().getColumn(5).setPreferredWidth(550);
+    private void configureColumnWidths() {
+        petTable.getColumnModel().getColumn(0).setPreferredWidth(50);   // ID
+        petTable.getColumnModel().getColumn(1).setPreferredWidth(150);  // Name
+        petTable.getColumnModel().getColumn(2).setPreferredWidth(80);   // Species
+        petTable.getColumnModel().getColumn(3).setPreferredWidth(50);   // Age
+        petTable.getColumnModel().getColumn(4).setPreferredWidth(200);   // Owner Name(ID)
+        petTable.getColumnModel().getColumn(5).setPreferredWidth(550);  // Notes
+    }
 
-        loadPetsIntoTable(petRepository);
+    private void addListeners(User currentUser) {
 
-        add(new JScrollPane(petTable), BorderLayout.CENTER);
-
-        //Mouse listener for by-column sorting and pet double click for details
+        // Sorting listener
         petTable.getTableHeader().addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                int viewColumn = petTable.columnAtPoint(e.getPoint());
+                if (viewColumn < 0) return;
 
-                int column = petTable.columnAtPoint(e.getPoint());
+                int modelColumn = petTable.convertColumnIndexToModel(viewColumn);
 
-                //If click the same column header, flip sorting order
-                if (column == lastSortedColumn) {
+                if (modelColumn == lastSortedModelColumn) {
                     ascending = !ascending;
-                }
-                else {
+                } else {
                     ascending = true;
                 }
-                lastSortedColumn = column;
 
-                //Measure sorting efficiency
+                lastSortedModelColumn = modelColumn;
+
                 long start = System.nanoTime();
-
-                sortByColumn(column);
+                sortByColumn(modelColumn);
                 updateColumnHeader();
-
                 long end = System.nanoTime();
+
                 double ms = (end - start) / 1_000_000.0;
-
-                //Update the main screen status label to display sorting efficiency
-                String direction;
-                if (ascending) {
-                    direction = "ascending";
-                } else {
-                    direction = "descending";
-                }
-
-                String colName = petTable.getColumnName(column);
+                String direction = ascending ? "ascending" : "descending";
+                String colName = petTable.getColumnName(viewColumn);
 
                 statusLabel.setText(
                         "Sorted by " + colName + " (" + direction + ") in " + String.format("%.3f ms", ms)
@@ -100,33 +111,40 @@ public class PetTablePanel extends JPanel {
             }
         });
 
+        // Double-click listener
         petTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2 && petTable.getSelectedRow() != -1) {
-
-                    int row = petTable.getSelectedRow();
-                    int petId = (int) petTable.getValueAt(row, 0);
-
-                    Pet pet = petRepository.getPetById(petId);
-
-                    new PetDetailsScreen(pet, currentUser, ownerRepository).setVisible(true);
-
+                if (e.getClickCount() == 2) {
+                    openSelectedPet(currentUser);
                 }
             }
         });
     }
 
+    /*
+        ----------------Data loading + Sorting Methods-------------------------
+     */
+
     public void loadPetsIntoTable(PetRepository petRepository) {
         tableModel.setRowCount(0);
 
         for (Pet pet : petRepository.getPetList()) {
+
+            Owner owner = ownerRepository.getOwnerById(pet.getOwnerId());
+            String ownerLabel;
+            if (owner != null) {
+                ownerLabel = owner.getName() + " (" + owner.getOwnerId() + ")";
+            } else {
+                ownerLabel = "Unknown";
+            }
+
             tableModel.addRow(new Object[]{
                     pet.getPetId(),
                     pet.getName(),
                     pet.getSpecies(),
                     pet.getAge(),
-                    pet.getOwnerId(),
+                    ownerLabel,
                     pet.getNotes()
             });
         }
@@ -134,86 +152,70 @@ public class PetTablePanel extends JPanel {
 
     //Determines what order to feed into my merge sort algorithm, ascending or descending
     private void sortByColumn(int columnIndex) {
-        Comparator<Pet> comparator = null;
+        Comparator<Pet> comparator = getComparator(columnIndex);
 
-        switch (columnIndex) {
-            case 0: // ID
-                if (ascending) {
-                    comparator = Comparator.comparingInt(Pet::getPetId);
-                } else {
-                    comparator = (p1, p2) -> Integer.compare(p2.getPetId(), p1.getPetId());
-                }
-                break;
+        if (comparator == null) return;
+        if (!ascending) comparator = comparator.reversed();
 
-            case 1: // Name
-                if (ascending) {
-                    comparator = (p1, p2) -> p1.getName().compareToIgnoreCase(p2.getName());
-                } else {
-                    comparator = (p1, p2) -> p2.getName().compareToIgnoreCase(p1.getName());
-                }
-                break;
-
-            case 2: // Species
-                if (ascending) {
-                    comparator = (p1, p2) -> p1.getSpecies().compareToIgnoreCase(p2.getSpecies());
-                } else {
-                    comparator = (p1, p2) -> p2.getSpecies().compareToIgnoreCase(p1.getSpecies());
-                }
-                break;
-
-            case 3: // Age
-                if (ascending) {
-                    comparator = Comparator.comparingInt(Pet::getAge);
-                } else {
-                    comparator = (p1, p2) -> Integer.compare(p2.getAge(), p1.getAge());
-                }
-                break;
-
-            case 4: // Owner ID
-                if (ascending) {
-                    comparator = Comparator.comparingInt(Pet::getOwnerId);
-                } else {
-                    comparator = (p1, p2) -> Integer.compare(p2.getOwnerId(), p1.getOwnerId());
-                }
-                break;
-
-            case 5: // Notes
-                if (ascending) {
-                    comparator = (p1, p2) -> p1.getNotes().compareToIgnoreCase(p2.getNotes());
-                } else {
-                    comparator = (p1, p2) -> p2.getNotes().compareToIgnoreCase(p1.getNotes());
-                }
-                break;
-        }
-
-        //Sorts pets by chosen column, asc or desc, and loads pets into table
         petRepository.sortPetsBy(comparator);
         loadPetsIntoTable(petRepository);
     }
 
+    private Comparator<Pet> getComparator(int columnIndex) {
+        switch (columnIndex) {
+            case 0: return Comparator.comparingInt(Pet::getPetId);
+            case 1: return Comparator.comparing(Pet::getName, String.CASE_INSENSITIVE_ORDER);
+            case 2: return Comparator.comparing(Pet::getSpecies, String.CASE_INSENSITIVE_ORDER);
+            case 3: return Comparator.comparingInt(Pet::getAge);
+            //Compare this column by owner name instead of Owner ID
+            case 4: return Comparator.comparing(
+                    pet -> {
+                        Owner owner = ownerRepository.getOwnerById(pet.getOwnerId());
+                        return owner != null ? owner.getName() : "";
+                    },
+                    String.CASE_INSENSITIVE_ORDER
+            );
+            case 5: return Comparator.comparing(Pet::getNotes, String.CASE_INSENSITIVE_ORDER);
+            default: return null;
+        }
+    }
+
     private void updateColumnHeader() {
-        String[] columns = {"ID", "Name", "Species", "Age", "Owner ID", "Notes"};
+        // Loop over *view* columns
+        for (int viewIndex = 0; viewIndex < petTable.getColumnCount(); viewIndex++) {
+            TableColumn column = petTable.getColumnModel().getColumn(viewIndex);
 
-        //Append an up arrow or down arrow depending on sort order and last clicked column
-        for (int i = 0; i < columns.length; i++) {
-            String arrow;
-            if (i == lastSortedColumn) {
+            // Get the model index for this view column
+            int modelIndex = petTable.convertColumnIndexToModel(viewIndex);
 
-                if (ascending) {
-                    arrow = " ▲";
-                }
-                else {
-                    arrow = " ▼";
-                }
-                petTable.getColumnModel().getColumn(i).setHeaderValue(columns[i] + arrow);
-            }
-            else {
-                petTable.getColumnModel().getColumn(i).setHeaderValue(columns[i]);
+            // Base header text from COLUMNS[modelIndex]
+            String baseHeader = COLUMNS[modelIndex];
+
+            if (modelIndex == lastSortedModelColumn) {
+                baseHeader += ascending ? " ▲" : " ▼";
             }
 
+            column.setHeaderValue(baseHeader);
         }
 
-        //redraw the headers
         petTable.getTableHeader().repaint();
+    }
+
+    private void openSelectedPet(User currentUser) {
+        int viewRow = petTable.getSelectedRow();
+        if (viewRow < 0) return;
+
+        //Convert view row to model row
+        //Initially did not do this, had a bug when user dragged ID column before selecting
+        int modelRow = petTable.convertRowIndexToModel(viewRow);
+
+        //PetId is always column 0 in the model row
+        int petId = (int) petTable.getModel().getValueAt(modelRow, 0);
+
+        Pet pet = petRepository.getPetById(petId);
+
+        if (pet != null) {
+            new PetDetailsScreen(pet, currentUser, ownerRepository).setVisible(true);
+        }
     }
 }

@@ -7,7 +7,7 @@ import com.petboarding.Models.Owner;
 import com.petboarding.Models.Pet;
 import com.petboarding.Database.PetDAO;
 import com.petboarding.Models.User;
-import com.petboarding.View.EditPetScreen;
+import com.petboarding.View.EditViews.EditPetScreen;
 import javax.swing.*;
 import java.util.List;
 
