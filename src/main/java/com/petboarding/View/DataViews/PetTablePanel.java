@@ -203,30 +203,40 @@ public class PetTablePanel extends JPanel {
         int viewRow = petTable.getSelectedRow();
         if (viewRow < 0) return;
 
-        //Convert view row to model row
         int modelRow = petTable.convertRowIndexToModel(viewRow);
         int petId = (int) petTable.getModel().getValueAt(modelRow, 0);
 
         Pet pet = context.petRepository.getPetById(petId);
-
         if (pet == null) return;
 
-        //If a details screen is already open, close it and set it to null to make way for new one
-        if (petDetailsScreen != null) {
-            petDetailsScreen.dispose();
-            petDetailsScreen = null;
+        // If no window exists, create it
+        if (petDetailsScreen == null) {
+            petDetailsScreen = new PetDetailsScreen(pet, context);
+
+            petDetailsScreen.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    petDetailsScreen = null;
+                }
+            });
+
+            petDetailsScreen.setVisible(true);
+            petDetailsScreen.setExtendedState(JFrame.NORMAL);
+            petDetailsScreen.toFront();
+            petDetailsScreen.requestFocus();
+            return;
         }
 
-        petDetailsScreen = new PetDetailsScreen(pet, context);
+        //Load new pet in existing pet details screen
+        petDetailsScreen.loadPet(pet);
 
-        //Set petdetailsscreen back to null to reopen later
-        petDetailsScreen.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosed(WindowEvent e) {
-                petDetailsScreen = null;
-            }
-        });
+        //Bring window into focus
+        if ((petDetailsScreen.getExtendedState() & JFrame.ICONIFIED) != 0) {
+            petDetailsScreen.setExtendedState(JFrame.NORMAL);
+        }
 
-        petDetailsScreen.setVisible(true);
+        petDetailsScreen.toFront();
+        petDetailsScreen.requestFocus();
     }
+
 }

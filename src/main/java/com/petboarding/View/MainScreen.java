@@ -534,22 +534,22 @@ public class MainScreen extends JFrame {
     private void manageUsers() {
 
         //Ensure only one instance of the window is open
-        if (manageUsersScreen == null) {
-            manageUsersScreen = new ManageUsersScreen(context);
-
-            manageUsersScreen.addWindowListener(new WindowAdapter() {
-                @Override
-                public void windowClosed(WindowEvent e) {
-                    manageUsersScreen = null;
-                }
-            });
-
-            manageUsersScreen.setVisible(true);
-
-        } else {
+        if (manageUsersScreen != null) {
             manageUsersScreen.toFront();
             manageUsersScreen.requestFocus();
+            return;
         }
+
+        manageUsersScreen = new ManageUsersScreen(context);
+
+        manageUsersScreen.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                manageUsersScreen = null;
+            }
+        });
+
+        manageUsersScreen.setVisible(true);
 
     }
 

@@ -11,12 +11,15 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.Comparator;
 
 public class OwnerTablePanel extends JPanel {
     private JTable ownerTable;
     private DefaultTableModel tableModel;
     private final AppContext context;
+    private OwnerDetailsScreen ownerDetailsScreen;
 
     private int lastSortedModelColumn = -1;
     private boolean ascending = true;
@@ -180,18 +183,47 @@ public class OwnerTablePanel extends JPanel {
         int viewRow = ownerTable.getSelectedRow();
         if (viewRow < 0) return;
 
-        //Convert view row to model row
-        //Initially did not do this, had a bug when user dragged ID column before selecting
         int modelRow = ownerTable.convertRowIndexToModel(viewRow);
-
-        //OwnerId is always column 0 in the model row
         int ownerId = (int) ownerTable.getModel().getValueAt(modelRow, 0);
 
         Owner owner = context.ownerRepository.getOwnerById(ownerId);
-        if (owner != null && context.currentUser.isAdmin()) {
-            new OwnerDetailsScreen(owner, context).setVisible(true);
+        if (owner == null) return;
+
+        // If the window does not exist, create it
+        if (ownerDetailsScreen == null) {
+            ownerDetailsScreen = new OwnerDetailsScreen(owner, context);
+
+            ownerDetailsScreen.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    ownerDetailsScreen = null;
+                }
+            });
+
+            ownerDetailsScreen.setVisible(true);
+            ownerDetailsScreen.setExtendedState(JFrame.NORMAL);
+            ownerDetailsScreen.toFront();
+            ownerDetailsScreen.requestFocus();
+            return;
         }
+
+        // If it DOES exist, reuse it
+        // Restore if minimized
+        if ((ownerDetailsScreen.getExtendedState() & JFrame.ICONIFIED) != 0) {
+            ownerDetailsScreen.setExtendedState(JFrame.NORMAL);
+        }
+
+        // Load the new owner into the existing window
+        ownerDetailsScreen.loadOwner(owner);
+
+        // Bring it forward
+        ownerDetailsScreen.toFront();
+        ownerDetailsScreen.requestFocus();
     }
+
+
+
+
 
     /*
         -------------------------------READ_ONLY user message------------------------

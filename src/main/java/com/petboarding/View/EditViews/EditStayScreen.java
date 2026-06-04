@@ -1,41 +1,48 @@
-//Packages
 package com.petboarding.View.EditViews;
 
-//Imports
 import com.petboarding.Models.Stay;
 import com.petboarding.Database.StayDAO;
 import com.petboarding.View.AppContext;
 import com.petboarding.View.DetailViews.StayDetailsScreen;
+
 import javax.swing.*;
 import java.awt.*;
+import java.sql.SQLException;
 
 public class EditStayScreen extends JFrame {
 
     private final StayDetailsScreen parent;
     private final AppContext context;
+    private final Stay stay;
+
+    // Editable fields (declared once, used everywhere)
+    private JTextField checkInField;
+    private JTextField checkOutField;
+    private JTextField dailyRateField;
+    private JTextField groomingField;
+    private JComboBox<String> statusDropdown;
 
     public EditStayScreen(Stay stay, StayDetailsScreen parent, AppContext context) {
+        this.stay = stay;
         this.parent = parent;
         this.context = context;
 
         setTitle("Edit Stay - #" + stay.getStayId());
         setSize(550, 300);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
         JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
 
-        // Editable fields
-        JTextField checkInField = new JTextField(stay.getCheckInDate());
-        JTextField checkOutField = new JTextField(stay.getCheckOutDate());
-        JTextField dailyRateField = new JTextField(String.valueOf(stay.getDailyRate()));
-        JTextField groomingField = new JTextField(String.valueOf(stay.getGrooming()));
+        //Create fields
+        checkInField = new JTextField(stay.getCheckInDate());
+        checkOutField = new JTextField(stay.getCheckOutDate());
+        dailyRateField = new JTextField(String.valueOf(stay.getDailyRate()));
+        groomingField = new JTextField(String.valueOf(stay.getGrooming()));
 
-        //Status drop down
-        JComboBox<String> statusDropdown = new JComboBox<>(new String[]{"In Progress", "Completed"});
+        statusDropdown = new JComboBox<>(new String[]{"In Progress", "Completed"});
         statusDropdown.setSelectedItem(stay.getStatus());
 
-        // Layout
+        //Layout
         panel.add(new JLabel("Check-In:"));
         panel.add(checkInField);
 
@@ -52,59 +59,50 @@ public class EditStayScreen extends JFrame {
         panel.add(statusDropdown);
 
         JButton saveButton = new JButton("Save Changes");
-
-        //Save button functionality, update Stay object and attempt to update DB via DAO
-        saveButton.addActionListener(e -> saveStayChanges(stay, checkInField, checkOutField,
-                dailyRateField, groomingField, statusDropdown));
-
+        saveButton.addActionListener(e -> saveStayChanges());
 
         add(panel, BorderLayout.CENTER);
         add(saveButton, BorderLayout.SOUTH);
     }
 
-    private void saveStayChanges(
-            Stay stay,
-            JTextField checkInField,
-            JTextField checkOutField,
-            JTextField dailyRateField,
-            JTextField groomingField,
-            JComboBox<String> statusDropdown
-    ) {
+    private void saveStayChanges() {
         try {
+            // Update stay object
             stay.setCheckInDate(checkInField.getText());
             stay.setCheckOutDate(checkOutField.getText());
             stay.setDailyRate(Double.parseDouble(dailyRateField.getText()));
             stay.setGrooming(Integer.parseInt(groomingField.getText()));
             stay.setStatus(statusDropdown.getSelectedItem().toString());
 
-            // Update stay table in DB
+            // Update DB
             StayDAO.updateStay(stay);
 
-            boolean completed = stay.getStatus().equals("Completed");
+            boolean completed = stay.getStatus().equalsIgnoreCase("Completed");
+            boolean nowInProgress = stay.getStatus().equalsIgnoreCase("In Progress");
 
-            // Update repository
+            //completed, remove from repo
             if (completed) {
                 context.stayRepository.removeStay(stay.getStayId());
-                parent.dispose();   // close StayDetailsScreen if completed
-            } else {
-                context.stayRepository.updateStay(stay);
             }
 
-            //Refresh Current Stays table on main screen
+            // CASE 2: In Progress → ensure it is in repository
+            if (nowInProgress) {
+                if (!context.stayRepository.containsStay(stay.getStayId())) {
+                    context.stayRepository.addStay(stay);
+                } else {
+                    context.stayRepository.updateStay(stay);
+                }
+            }
+
+            //Refresh screens
             context.refreshCurrentStays();
+            parent.refreshDetails();
 
-            //Refresh details screen if kept open
-            if (!completed) {
-                parent.refreshDetails();
-            }
-
-            //Success message then close edit screen
             JOptionPane.showMessageDialog(this, "Stay updated successfully.");
             dispose();
 
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Error updating stay: " + ex.getMessage());
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error updating stay: " + e.getMessage());
         }
     }
-
 }

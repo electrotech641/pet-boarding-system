@@ -116,14 +116,15 @@ public class EditUserScreen extends JFrame {
     }
 
     private void deleteUser() throws SQLException {
-        //Show confirmation dialog to confirm deletion
+        //Show confirmation dialog to confirm deletion, demand focus
         int choice = JOptionPane.showConfirmDialog(
-                this,
+                SwingUtilities.getWindowAncestor(this),
                 "Are you sure you want to delete this user?",
                 "Confirm Delete",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE
         );
+
 
         if (choice != JOptionPane.YES_OPTION) {
             return; // User canceled

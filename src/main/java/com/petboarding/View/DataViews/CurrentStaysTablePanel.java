@@ -13,12 +13,15 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.Comparator;
 
 public class CurrentStaysTablePanel extends JPanel {
 
     private JTable staysTable;
     private DefaultTableModel tableModel;
+    private StayDetailsScreen stayDetailsScreen;
 
     private final AppContext context;
 
@@ -210,17 +213,44 @@ public class CurrentStaysTablePanel extends JPanel {
         int viewRow = staysTable.getSelectedRow();
         if (viewRow < 0) return;
 
-        //Convert view row to model row
-        //Initially did not do this, had a bug when user dragged ID column before selecting
         int modelRow = staysTable.convertRowIndexToModel(viewRow);
-
-        //StayId is always column 0 in the model row
         int stayId = (int) staysTable.getModel().getValueAt(modelRow, 0);
 
         Stay stay = context.stayRepository.getStayById(stayId);
-        if (stay != null) {
-            new StayDetailsScreen(stay, context).setVisible(true);
+        if (stay == null) return;
+
+        // If no window exists, create it
+        if (stayDetailsScreen == null) {
+            stayDetailsScreen = new StayDetailsScreen(stay, context);
+
+            stayDetailsScreen.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    stayDetailsScreen = null;
+                }
+            });
+
+            stayDetailsScreen.setVisible(true);
+            stayDetailsScreen.setExtendedState(JFrame.NORMAL);
+            stayDetailsScreen.toFront();
+            stayDetailsScreen.requestFocus();
+            return;
         }
+
+        // If window exists, reuse it
+        if ((stayDetailsScreen.getExtendedState() & JFrame.ICONIFIED) != 0) {
+            stayDetailsScreen.setExtendedState(JFrame.NORMAL);
+        }
+
+        try {
+            stayDetailsScreen.loadStay(stay);   // you will add this method next
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        stayDetailsScreen.toFront();
+        stayDetailsScreen.requestFocus();
     }
+
 
 }

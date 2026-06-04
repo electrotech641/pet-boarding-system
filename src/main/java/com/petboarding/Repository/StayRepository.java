@@ -75,4 +75,8 @@ public class StayRepository {
         }
     }
 
+    public boolean containsStay(int stayId) {
+        return stayMap.containsKey(stayId);
+    }
+
 }
