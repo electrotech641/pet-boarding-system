@@ -1,7 +1,8 @@
+//Package
 package com.petboarding.View;
 
+//Imports
 import com.petboarding.Models.User;
-import com.petboarding.Repository.UserRepository;
 import com.petboarding.View.CreateViews.CreateUserScreen;
 import com.petboarding.View.EditViews.EditUserScreen;
 
@@ -17,19 +18,16 @@ public class ManageUsersScreen extends JFrame {
 
     private JTable userTable;
     private DefaultTableModel tableModel;
-    private UserRepository userRepository;
-    private User currentUser;
+    private final AppContext context;
+
 
     private final String[] cols = {"User ID", "Username", "Role"};
-    private final JLabel statusLabel;
 
     private int lastSortedModelColumn = -1;
     private boolean ascending = true;
 
-    public ManageUsersScreen(UserRepository userRepository, User currentUser, JLabel statusLabel) {
-        this.userRepository = userRepository;
-        this.currentUser = currentUser;
-        this.statusLabel = statusLabel;
+    public ManageUsersScreen(AppContext context) {
+        this.context = context;
 
         setTitle("Manage Users");
         setSize(600, 400);
@@ -52,7 +50,7 @@ public class ManageUsersScreen extends JFrame {
 
         //Button click listeners
         addUserBtn.addActionListener(e ->
-                new CreateUserScreen(currentUser, userRepository, this).setVisible(true)
+                new CreateUserScreen(context, this).setVisible(true)
         );
 
         editUserBtn.addActionListener(e -> openSelectedUser());
@@ -107,7 +105,7 @@ public class ManageUsersScreen extends JFrame {
                 String direction = ascending ? "ascending" : "descending";
                 String colName = userTable.getColumnName(viewColumn);
 
-                statusLabel.setText(
+                context.statusLabel.setText(
                         "Sorted by " + colName + " (" + direction + ") in " + String.format("%.3f ms", ms)
                 );
             }
@@ -127,13 +125,15 @@ public class ManageUsersScreen extends JFrame {
     public void loadUsersIntoTable() {
         tableModel.setRowCount(0);
 
-        for (User user : userRepository.getUserList()) {
+        for (User user : context.userRepository.getUserList()) {
             tableModel.addRow(new Object[]{
                     user.getId(),
                     user.getUsername(),
                     user.getRole()
             });
         }
+
+        System.out.println("UserRepository size = " + context.userRepository.getUserList().size());
     }
 
     /*
@@ -146,7 +146,7 @@ public class ManageUsersScreen extends JFrame {
         if (comparator == null) return;
         if (!ascending) comparator = comparator.reversed();
 
-        userRepository.sortUsersBy(comparator);
+        context.userRepository.sortUsersBy(comparator);
         loadUsersIntoTable();
     }
 
@@ -193,9 +193,9 @@ public class ManageUsersScreen extends JFrame {
                 userTable.getModel().getValueAt(modelRow, 0).toString()
         );
 
-        User selectedUser = userRepository.getUserById(userId);
+        User selectedUser = context.userRepository.getUserById(userId);
         if (selectedUser != null) {
-            new EditUserScreen(currentUser, selectedUser, userRepository, this).setVisible(true);
+            new EditUserScreen(context, selectedUser, this).setVisible(true);
         }
     }
 
@@ -203,7 +203,7 @@ public class ManageUsersScreen extends JFrame {
     public void refreshTable() {
         tableModel.setRowCount(0);
 
-        for (User user : userRepository.getUserList()) {
+        for (User user : context.userRepository.getUserList()) {
             tableModel.addRow(new Object[]{
                     user.getId(),
                     user.getUsername(),

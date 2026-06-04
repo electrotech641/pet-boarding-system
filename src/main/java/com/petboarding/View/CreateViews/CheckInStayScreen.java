@@ -1,11 +1,11 @@
+//Package
 package com.petboarding.View.CreateViews;
 
+//Imports
 import com.petboarding.Models.Stay;
 import com.petboarding.Models.Pet;
-import com.petboarding.Models.User;
 import com.petboarding.Database.StayDAO;
-import com.petboarding.Repository.StayRepository;
-import com.petboarding.View.DataViews.CurrentStaysTablePanel;
+import com.petboarding.View.AppContext;
 import com.petboarding.View.DetailViews.PetDetailsScreen;
 
 import javax.swing.*;
@@ -14,23 +14,17 @@ import java.time.LocalDate;
 
 public class CheckInStayScreen extends JFrame {
 
-    private final StayRepository stayRepository;
-    private final CurrentStaysTablePanel currentStaysTablePanel;
     private final PetDetailsScreen parent;
+    private final AppContext context;
 
-    public CheckInStayScreen(
-            Pet pet,
-            User currentUser,
-            StayRepository stayRepository,
-            CurrentStaysTablePanel currentStaysTablePanel,
-            PetDetailsScreen parent) {
+    public CheckInStayScreen(Pet pet, PetDetailsScreen parent, AppContext context) {
 
-        this.stayRepository = stayRepository;
-        this.currentStaysTablePanel = currentStaysTablePanel;
+        this.context = context;
         this.parent = parent;
 
         setTitle("Check-In Pet: " + pet.getName());
         setSize(400, 250);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
         JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
@@ -94,10 +88,10 @@ public class CheckInStayScreen extends JFrame {
 
             if (newStay != null) {
                 JOptionPane.showMessageDialog(this, pet.getName() + " checked in successfully.");
-                stayRepository.addStay(newStay);
+                context.stayRepository.addStay(newStay);
                 parent.setCurrentlyBoarded();
                 parent.refreshDetails();
-                currentStaysTablePanel.loadStaysIntoTable(stayRepository);
+                context.refreshCurrentStays();
 
                 dispose();
             } else {

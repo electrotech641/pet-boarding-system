@@ -49,21 +49,27 @@ public class PasswordUtil {
      */
 
     public static String getPasswordValidationMessage(String password) {
+        String requirementsMsg = "Password Requirements:\n" +
+                "- At least 8 characters\n" +
+                "- At least one uppercase letter(A-Z)\n" +
+                "- At least one lowercase letter(a-z)\n" +
+                "- At least one number (0-9)\n" +
+                "- At least one special character (!@#$%^&*(),.?\":{}|<>)\n\n";
 
         if (password.length() < 8) {
-            return "Password must be at least 8 characters long";
+            return requirementsMsg += "Password must be at least 8 characters long";
         }
         if (!password.matches(".*[A-Z].*")) {
-            return "Password must contain at least one uppercase letter";
+            return requirementsMsg += "Password must contain at least one uppercase letter";
         }
         if (!password.matches(".*[a-z].*")) {
-            return "Password must contain at least one lowercase letter";
+            return requirementsMsg += "Password must contain at least one lowercase letter";
         }
         if (!password.matches(".*\\d.*")) {
-            return "Password must contain at least one number";
+            return requirementsMsg += "Password must contain at least one number";
         }
         if (!password.matches(".*[!@#$%^&*(),.?\":{}|<>].*")) {
-            return "Password must contain at least one special character";
+            return requirementsMsg += "Password must contain at least one special character";
         }
 
         return null; // valid

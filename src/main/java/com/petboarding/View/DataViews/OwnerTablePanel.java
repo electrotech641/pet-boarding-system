@@ -2,9 +2,8 @@
 package com.petboarding.View.DataViews;
 
 //Imports
-import com.petboarding.Repository.OwnerRepository;
 import com.petboarding.Models.Owner;
-import com.petboarding.Models.User;
+import com.petboarding.View.AppContext;
 import com.petboarding.View.DetailViews.OwnerDetailsScreen;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -17,21 +16,19 @@ import java.util.Comparator;
 public class OwnerTablePanel extends JPanel {
     private JTable ownerTable;
     private DefaultTableModel tableModel;
-    private OwnerRepository ownerRepository;
-    private JLabel statusLabel;
+    private final AppContext context;
 
     private int lastSortedModelColumn = -1;
     private boolean ascending = true;
 
     private static final String[] COLUMNS = {"ID", "Name", "Phone", "Email", "Address"};
 
-    public OwnerTablePanel(OwnerRepository ownerRepository, User currentUser, JLabel statusLabel) {
-        this.ownerRepository = ownerRepository;
-        this.statusLabel = statusLabel;
+    public OwnerTablePanel(AppContext context) {
+        this.context = context;
 
         setLayout(new BorderLayout());
 
-        if (currentUser.isReadOnly()) {
+        if (context.currentUser.isReadOnly()) {
             showReadOnlyMessage();
             return;
         }
@@ -39,8 +36,7 @@ public class OwnerTablePanel extends JPanel {
         buildTableModel();
         buildTable();
         configureColumnWidths();
-        loadOwnersIntoTable(ownerRepository);
-        addListeners(currentUser);
+        addListeners();
 
         add(new JScrollPane(ownerTable), BorderLayout.CENTER);
     }
@@ -72,7 +68,7 @@ public class OwnerTablePanel extends JPanel {
         ownerTable.getColumnModel().getColumn(4).setPreferredWidth(450);    // Address
     }
 
-    private void addListeners(User currentUser) {
+    private void addListeners() {
 
         // Sorting listener (view → model safe)
         ownerTable.getTableHeader().addMouseListener(new MouseAdapter() {
@@ -101,7 +97,7 @@ public class OwnerTablePanel extends JPanel {
                 String direction = ascending ? "ascending" : "descending";
                 String colName = ownerTable.getColumnName(viewColumn);
 
-                statusLabel.setText(
+                context.statusLabel.setText(
                         "Sorted owners by " + colName + " (" + direction + ") in " + String.format("%.3f ms", ms)
                 );
             }
@@ -112,7 +108,7 @@ public class OwnerTablePanel extends JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
-                    openSelectedOwner(currentUser);
+                    openSelectedOwner();
                 }
             }
         });
@@ -121,10 +117,14 @@ public class OwnerTablePanel extends JPanel {
     /*
         ------------------Data loading + Sorting Methods-------------------------------------
      */
-    public void loadOwnersIntoTable(OwnerRepository ownerRepository) {
+    public void loadOwnersIntoTable() {
+        if (context.currentUser.isReadOnly()) {
+            return;
+        }
+
         tableModel.setRowCount(0);
 
-        for (Owner owner : ownerRepository.getOwnerList()) {
+        for (Owner owner : context.ownerRepository.getOwnerList()) {
             tableModel.addRow(new Object[]{
                     owner.getOwnerId(),
                     owner.getName(),
@@ -139,8 +139,8 @@ public class OwnerTablePanel extends JPanel {
         Comparator<Owner> comparator = getComparator(columnIndex);
         if (!ascending) comparator = comparator.reversed();
 
-        ownerRepository.sortOwnersBy(comparator);
-        loadOwnersIntoTable(ownerRepository);
+        context.ownerRepository.sortOwnersBy(comparator);
+        loadOwnersIntoTable();
     }
 
     private Comparator<Owner> getComparator(int columnIndex) {
@@ -176,7 +176,7 @@ public class OwnerTablePanel extends JPanel {
     /*
         --------Method to open selected owner details screen--------------------
      */
-    private void openSelectedOwner(User currentUser) {
+    private void openSelectedOwner() {
         int viewRow = ownerTable.getSelectedRow();
         if (viewRow < 0) return;
 
@@ -187,9 +187,9 @@ public class OwnerTablePanel extends JPanel {
         //OwnerId is always column 0 in the model row
         int ownerId = (int) ownerTable.getModel().getValueAt(modelRow, 0);
 
-        Owner owner = ownerRepository.getOwnerById(ownerId);
-        if (owner != null && currentUser.isAdmin()) {
-            new OwnerDetailsScreen(owner, currentUser).setVisible(true);
+        Owner owner = context.ownerRepository.getOwnerById(ownerId);
+        if (owner != null && context.currentUser.isAdmin()) {
+            new OwnerDetailsScreen(owner, context).setVisible(true);
         }
     }
 

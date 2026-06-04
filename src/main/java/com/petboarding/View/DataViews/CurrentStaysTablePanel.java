@@ -3,11 +3,9 @@ package com.petboarding.View.DataViews;
 
 //Imports
 import com.petboarding.Models.Pet;
-import com.petboarding.Repository.OwnerRepository;
-import com.petboarding.Repository.PetRepository;
-import com.petboarding.Repository.StayRepository;
 import com.petboarding.Models.Stay;
 import com.petboarding.Models.User;
+import com.petboarding.View.AppContext;
 import com.petboarding.View.DetailViews.StayDetailsScreen;
 
 import javax.swing.*;
@@ -22,11 +20,7 @@ public class CurrentStaysTablePanel extends JPanel {
     private JTable staysTable;
     private DefaultTableModel tableModel;
 
-    private final StayRepository stayRepository;
-    private final PetRepository petRepository;
-    private final OwnerRepository ownerRepository;
-    private final User currentUser;
-    private final JLabel statusLabel;
+    private final AppContext context;
 
     private int lastSortedModelColumn = -1;
     private boolean ascending = true;
@@ -36,17 +30,9 @@ public class CurrentStaysTablePanel extends JPanel {
             "Daily Rate", "Grooming", "Total Cost", "Status"
     };
 
-    public CurrentStaysTablePanel(StayRepository stayRepository,
-                                  PetRepository petRepository,
-                                  OwnerRepository ownerRepository,
-                                  User user,
-                                  JLabel statusLabel) {
+    public CurrentStaysTablePanel(AppContext context) {
 
-        this.stayRepository = stayRepository;
-        this.petRepository = petRepository;
-        this.ownerRepository = ownerRepository;
-        this.currentUser = user;
-        this.statusLabel = statusLabel;
+        this.context = context;
 
         setLayout(new BorderLayout());
         setPreferredSize(new Dimension(1000, 220));
@@ -54,7 +40,6 @@ public class CurrentStaysTablePanel extends JPanel {
         buildTableModel();
         buildTable();
         configureColumnWidths();
-        loadStaysIntoTable(stayRepository);
         addListeners();
 
         add(new JScrollPane(staysTable), BorderLayout.CENTER);
@@ -120,7 +105,7 @@ public class CurrentStaysTablePanel extends JPanel {
                 String direction = ascending ? "ascending" : "descending";
                 String colName = staysTable.getColumnName(viewColumn);
 
-                statusLabel.setText(
+                context.statusLabel.setText(
                         "Sorted stays by " + colName + " (" + direction + ") in " + String.format("%.3f ms", ms)
                 );
             }
@@ -132,7 +117,7 @@ public class CurrentStaysTablePanel extends JPanel {
             public void mouseClicked(java.awt.event.MouseEvent e) {
 
                 if (e.getClickCount() == 2) {
-                    openSelectedStay(currentUser);
+                    openSelectedStay(context.currentUser);
                 }
             }
         });
@@ -142,13 +127,13 @@ public class CurrentStaysTablePanel extends JPanel {
         -----------------Data loading + Sorting methods-------------------------
      */
 
-    public void loadStaysIntoTable(StayRepository stayRepository) {
+    public void loadStaysIntoTable() {
         tableModel.setRowCount(0);
 
-        for (Stay stay : stayRepository.getStayList()) {
+        for (Stay stay : context.stayRepository.getStayList()) {
 
             String petName = "Unknown";
-            Pet pet = petRepository.getPetById(stay.getPetId());
+            Pet pet = context.petRepository.getPetById(stay.getPetId());
             if (pet != null) {
                 petName = pet.getName();
             }
@@ -173,8 +158,8 @@ public class CurrentStaysTablePanel extends JPanel {
         if (comparator == null) return;
         if (!ascending) comparator = comparator.reversed();
 
-        stayRepository.sortStaysBy(comparator);
-        loadStaysIntoTable(stayRepository);
+        context.stayRepository.sortStaysBy(comparator);
+        context.refreshCurrentStays();
     }
 
     private Comparator<Stay> getComparator(int columnIndex) {
@@ -184,7 +169,7 @@ public class CurrentStaysTablePanel extends JPanel {
             case 1:
                 return Comparator.comparing(
                         stay -> {
-                            var pet = petRepository.getPetById(stay.getPetId());
+                            var pet = context.petRepository.getPetById(stay.getPetId());
                             return pet != null ? pet.getName() : "";
                         },
                         String.CASE_INSENSITIVE_ORDER
@@ -232,22 +217,10 @@ public class CurrentStaysTablePanel extends JPanel {
         //StayId is always column 0 in the model row
         int stayId = (int) staysTable.getModel().getValueAt(modelRow, 0);
 
-        Stay stay = stayRepository.getStayById(stayId);
+        Stay stay = context.stayRepository.getStayById(stayId);
         if (stay != null) {
-            new StayDetailsScreen(
-                    stay,
-                    currentUser, stayRepository,
-                    petRepository,
-                    ownerRepository,
-                    CurrentStaysTablePanel.this
-            ).setVisible(true);
+            new StayDetailsScreen(stay, context).setVisible(true);
         }
     }
 
-    /*
-        ------Getter Method-----
-     */
-    public StayRepository getStayRepository() {
-        return stayRepository;
-    }
 }

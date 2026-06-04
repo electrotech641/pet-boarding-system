@@ -1,15 +1,21 @@
+//Package
 package com.petboarding.View.DetailViews;
 
+//Imports
 import com.petboarding.Models.Owner;
-import com.petboarding.Models.User;
+import com.petboarding.View.AppContext;
 
 import javax.swing.*;
 
 public class OwnerDetailsScreen extends JFrame {
 
-    public OwnerDetailsScreen(Owner owner, User user) {
+    private final AppContext context;
+
+    public OwnerDetailsScreen(Owner owner, AppContext context) {
+        this.context = context;
         setTitle("Owner Details");
         setSize(350, 250);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
 

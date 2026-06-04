@@ -1,9 +1,11 @@
+//Package
 package com.petboarding.View.CreateViews;
 
+//Imports
 import com.petboarding.Database.UserDAO;
 import com.petboarding.Models.User;
-import com.petboarding.Repository.UserRepository;
 import com.petboarding.Utilities.PasswordUtil;
+import com.petboarding.View.AppContext;
 import com.petboarding.View.ManageUsersScreen;
 
 import javax.swing.*;
@@ -12,21 +14,22 @@ import java.awt.*;
 public class CreateUserScreen extends JFrame {
 
     private final UserDAO userDAO = new UserDAO();
-    private final UserRepository userRepository;
     private final ManageUsersScreen parent;
-    private final User currentUser;
+    private final AppContext context;
 
     private final JTextField usernameField;
     private final JPasswordField passwordField;
     private final JComboBox<String> roleDropdown;
 
-    public CreateUserScreen(User currentUser, UserRepository userRepository, ManageUsersScreen parent) {
-        this.currentUser = currentUser;
-        this.userRepository = userRepository;
+
+    public CreateUserScreen(AppContext context, ManageUsersScreen parent) {
+
+        this.context = context;
         this.parent = parent;
 
         setTitle("Create User");
         setSize(350, 250);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new GridLayout(4, 2, 10, 10));
 
@@ -69,11 +72,11 @@ public class CreateUserScreen extends JFrame {
         try {
 
             //Create user in DB
-            User newUser = userDAO.createUser(currentUser, username, password, role);
+            User newUser = userDAO.createUser(context.currentUser, username, password, role);
 
             if (newUser != null) {
                 JOptionPane.showMessageDialog(this, "User created successfully");
-                userRepository.addUser(newUser);
+                context.userRepository.addUser(newUser);
                 parent.refreshTable();
                 dispose();
             } else {

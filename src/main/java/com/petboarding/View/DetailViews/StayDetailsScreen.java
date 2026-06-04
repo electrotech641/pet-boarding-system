@@ -6,11 +6,7 @@ import com.petboarding.Models.Stay;
 import com.petboarding.Database.StayDAO;
 import com.petboarding.Models.Pet;
 import com.petboarding.Models.Owner;
-import com.petboarding.Models.User;
-import com.petboarding.Repository.PetRepository;
-import com.petboarding.Repository.OwnerRepository;
-import com.petboarding.Repository.StayRepository;
-import com.petboarding.View.DataViews.CurrentStaysTablePanel;
+import com.petboarding.View.AppContext;
 import com.petboarding.View.EditViews.EditStayScreen;
 
 import javax.swing.*;
@@ -19,33 +15,28 @@ import java.sql.SQLException;
 public class StayDetailsScreen extends JFrame {
 
     private final Stay stay;
-    private final User currentUser;
-    private final CurrentStaysTablePanel currentStaysTablePanel;
-    private final StayRepository stayRepository;
+    private final AppContext context;
 
     private JButton checkOutButton;
     private final JLabel checkInLabel;
     private final JLabel checkOutLabel;
 
 
+
+
     public StayDetailsScreen(Stay stay,
-                             User user,
-                             StayRepository stayRepository,
-                             PetRepository petRepository,
-                             OwnerRepository ownerRepository,
-                             CurrentStaysTablePanel currentStaysTablePanel) {
+                             AppContext context) {
 
         this.stay = stay;
-        this.stayRepository = stayRepository;
-        this.currentUser = user;
-        this.currentStaysTablePanel = currentStaysTablePanel;
+        this.context = context;
         boolean notCheckedOut = stay.getStatus().equalsIgnoreCase("In Progress");
 
-        Pet pet = petRepository.getPetById(stay.getPetId());
-        Owner owner = ownerRepository.getOwnerById(pet.getOwnerId());
+        Pet pet = context.petRepository.getPetById(stay.getPetId());
+        Owner owner = context.ownerRepository.getOwnerById(pet.getOwnerId());
 
         setTitle("Stay Details - Stay #" + stay.getStayId());
         setSize(400, 300);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
         JPanel panel = new JPanel();
@@ -66,11 +57,11 @@ public class StayDetailsScreen extends JFrame {
         panel.add(new JLabel(" "));
 
         // Admin-only buttons
-        if (currentUser.isAdmin() || currentUser.getRole().equals("STAFF")) {
+        if (context.currentUser.isAdmin() || context.currentUser.getRole().equals("STAFF")) {
 
             JButton editStayButton = new JButton("Edit Stay");
             editStayButton.addActionListener(e -> {
-                new EditStayScreen(stay, this, stayRepository, currentStaysTablePanel).setVisible(true);
+                new EditStayScreen(stay, this, context).setVisible(true);
             });
 
             checkOutButton = new JButton("Check-Out");
@@ -86,7 +77,7 @@ public class StayDetailsScreen extends JFrame {
             JButton petDetailsButton = new JButton("Pet Details");
             petDetailsButton.addActionListener(e -> {
                 try {
-                    new PetDetailsScreen(pet, currentUser, ownerRepository, stayRepository, currentStaysTablePanel, petRepository).setVisible(true);
+                    new PetDetailsScreen(pet, context).setVisible(true);
                 } catch (SQLException ex) {
                     throw new RuntimeException(ex);
                 }
@@ -94,7 +85,7 @@ public class StayDetailsScreen extends JFrame {
 
             JButton ownerDetailsButton = new JButton("Owner Details");
             ownerDetailsButton.addActionListener(e -> {
-                new OwnerDetailsScreen(owner, currentUser).setVisible(true);
+                new OwnerDetailsScreen(owner, context).setVisible(true);
             });
 
             panel.add(Box.createVerticalStrut(10));
@@ -141,8 +132,8 @@ public class StayDetailsScreen extends JFrame {
         checkOutButton.setVisible(false);
 
         //Remove stay from CurrentStays table and refresh the table on the main screen
-        currentStaysTablePanel.getStayRepository().removeStay(stay.getStayId());
-        currentStaysTablePanel.loadStaysIntoTable(currentStaysTablePanel.getStayRepository());
+        context.stayRepository.removeStay(stay.getStayId());
+        context.refreshCurrentStays();
 
         //Success message box
         JOptionPane.showMessageDialog(this, pet.getName() + " checked out successfully!", "Check-Out Complete", JOptionPane.INFORMATION_MESSAGE);

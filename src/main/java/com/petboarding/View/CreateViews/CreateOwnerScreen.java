@@ -1,9 +1,10 @@
+//Package
 package com.petboarding.View.CreateViews;
 
+//Imports
 import com.petboarding.Models.Owner;
-import com.petboarding.Repository.OwnerRepository;
 import com.petboarding.Database.OwnerDAO;
-import com.petboarding.View.DataViews.OwnerTablePanel;
+import com.petboarding.View.AppContext;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,16 +14,15 @@ public class CreateOwnerScreen extends JFrame {
     private JTextField nameField, phoneField, emailField, addressField;
 
     private JButton saveButton;
+    private final AppContext context;
 
-    private final OwnerRepository ownerRepository;
-    private final OwnerTablePanel ownerTablePanel;
 
-    public CreateOwnerScreen(OwnerRepository ownerRepository, OwnerTablePanel ownerTablePanel) {
-        this.ownerRepository = ownerRepository;
-        this.ownerTablePanel = ownerTablePanel;
+    public CreateOwnerScreen(AppContext context) {
+        this.context = context;
 
         setTitle("Create Owner");
         setSize(400, 350);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new GridLayout(5, 2, 5, 5));
 
@@ -58,8 +58,8 @@ public class CreateOwnerScreen extends JFrame {
             int generatedId = OwnerDAO.addOwner(newOwner);
             newOwner.setOwnerId(generatedId);
 
-            ownerRepository.addOwner(newOwner);
-            ownerTablePanel.loadOwnersIntoTable(ownerRepository);
+            context.ownerRepository.addOwner(newOwner);
+            context.refreshOwners();
 
             JOptionPane.showMessageDialog(null, newOwner.getName() + " Owner has been created");
             dispose();

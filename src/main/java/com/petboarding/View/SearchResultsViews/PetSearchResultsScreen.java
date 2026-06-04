@@ -1,11 +1,9 @@
+//Package
 package com.petboarding.View.SearchResultsViews;
 
+//Imports
 import com.petboarding.Models.Pet;
-import com.petboarding.Models.User;
-import com.petboarding.Repository.OwnerRepository;
-import com.petboarding.Repository.PetRepository;
-import com.petboarding.Repository.StayRepository;
-import com.petboarding.View.DataViews.CurrentStaysTablePanel;
+import com.petboarding.View.AppContext;
 import com.petboarding.View.DetailViews.PetDetailsScreen;
 
 import javax.swing.*;
@@ -20,27 +18,16 @@ public class PetSearchResultsScreen extends JFrame {
 
     private JTable table;
     private List<Pet> pets;
-    private User currentUser;
-    private OwnerRepository ownerRepository;
-    private final StayRepository stayRepository;
-    private final CurrentStaysTablePanel currentStaysTablePanel;
-    private final PetRepository petRepository;
+    private final AppContext context;
 
     public PetSearchResultsScreen(List<Pet> pets,
-                                  User currentUser,
-                                  OwnerRepository ownerRepository,
-                                  StayRepository stayRepository,
-                                  CurrentStaysTablePanel currentStaysTablePanel,
-                                  PetRepository petRepository) {
+                                  AppContext context) {
         this.pets = pets;
-        this.currentUser = currentUser;
-        this.ownerRepository = ownerRepository;
-        this.stayRepository = stayRepository;
-        this.currentStaysTablePanel = currentStaysTablePanel;
-        this.petRepository = petRepository;
+        this.context = context;
 
         setTitle("Search Results (" + pets.size() + " found)");
         setSize(500, 300);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
         setLayout(new BorderLayout());
@@ -56,7 +43,7 @@ public class PetSearchResultsScreen extends JFrame {
 
         //Construct the table view of results
         for (Pet pet : pets) {
-            String ownerName = ownerRepository.getOwnerById(pet.getOwnerId()).getName();
+            String ownerName = context.ownerRepository.getOwnerById(pet.getOwnerId()).getName();
 
             model.addRow(new Object[]{
                     pet.getPetId(),
@@ -111,7 +98,7 @@ public class PetSearchResultsScreen extends JFrame {
         }
 
         if (selected != null) {
-            new PetDetailsScreen(selected, currentUser, ownerRepository, stayRepository, currentStaysTablePanel, petRepository).setVisible(true);
+            new PetDetailsScreen(selected, context).setVisible(true);
         }
     }
 }

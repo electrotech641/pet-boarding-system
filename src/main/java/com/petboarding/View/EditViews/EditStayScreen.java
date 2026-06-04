@@ -4,8 +4,7 @@ package com.petboarding.View.EditViews;
 //Imports
 import com.petboarding.Models.Stay;
 import com.petboarding.Database.StayDAO;
-import com.petboarding.Repository.StayRepository;
-import com.petboarding.View.DataViews.CurrentStaysTablePanel;
+import com.petboarding.View.AppContext;
 import com.petboarding.View.DetailViews.StayDetailsScreen;
 import javax.swing.*;
 import java.awt.*;
@@ -13,16 +12,15 @@ import java.awt.*;
 public class EditStayScreen extends JFrame {
 
     private final StayDetailsScreen parent;
-    private final StayRepository stayRepository;
-    private final CurrentStaysTablePanel currentStaysTablePanel;
+    private final AppContext context;
 
-    public EditStayScreen(Stay stay, StayDetailsScreen parent, StayRepository stayRepository, CurrentStaysTablePanel currentStaysTablePanel) {
+    public EditStayScreen(Stay stay, StayDetailsScreen parent, AppContext context) {
         this.parent = parent;
-        this.stayRepository = stayRepository;
-        this.currentStaysTablePanel = currentStaysTablePanel;
+        this.context = context;
 
         setTitle("Edit Stay - #" + stay.getStayId());
         setSize(550, 300);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
         JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
@@ -86,14 +84,14 @@ public class EditStayScreen extends JFrame {
 
             // Update repository
             if (completed) {
-                stayRepository.removeStay(stay.getStayId());
+                context.stayRepository.removeStay(stay.getStayId());
                 parent.dispose();   // close StayDetailsScreen if completed
             } else {
-                stayRepository.updateStay(stay);
+                context.stayRepository.updateStay(stay);
             }
 
             //Refresh Current Stays table on main screen
-            currentStaysTablePanel.loadStaysIntoTable(stayRepository);
+            context.refreshCurrentStays();
 
             //Refresh details screen if kept open
             if (!completed) {

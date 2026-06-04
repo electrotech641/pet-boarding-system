@@ -1,8 +1,9 @@
+//Package
 package com.petboarding.View.SearchResultsViews;
 
+//Imports
 import com.petboarding.Models.Owner;
-import com.petboarding.Models.User;
-import com.petboarding.Repository.OwnerRepository;
+import com.petboarding.View.AppContext;
 import com.petboarding.View.DetailViews.OwnerDetailsScreen;
 
 import javax.swing.*;
@@ -16,14 +17,15 @@ public class OwnerSearchResultsScreen extends JFrame {
 
     private JTable table;
     private List<Owner> owners;
-    private User currentUser;
+    private final AppContext context;
 
-    public OwnerSearchResultsScreen(List<Owner> owners, User currentUser) {
+    public OwnerSearchResultsScreen(List<Owner> owners, AppContext context) {
         this.owners = owners;
-        this.currentUser = currentUser;
+        this.context = context;
 
         setTitle("Owner Search Results");
         setSize(500, 300);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
         setLayout(new BorderLayout());
@@ -88,7 +90,7 @@ public class OwnerSearchResultsScreen extends JFrame {
         }
 
         if (selected != null) {
-            new OwnerDetailsScreen(selected, currentUser).setVisible(true);
+            new OwnerDetailsScreen(selected, context).setVisible(true);
         }
     }
 

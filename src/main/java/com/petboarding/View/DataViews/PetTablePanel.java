@@ -2,10 +2,8 @@
 package com.petboarding.View.DataViews;
 
 //Imports
-import com.petboarding.Repository.OwnerRepository;
-import com.petboarding.Repository.PetRepository;
 import com.petboarding.Models.*;
-import com.petboarding.Repository.StayRepository;
+import com.petboarding.View.AppContext;
 import com.petboarding.View.DetailViews.PetDetailsScreen;
 
 import javax.swing.*;
@@ -14,6 +12,8 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.sql.SQLException;
 import java.util.Comparator;
 
@@ -21,40 +21,24 @@ public class PetTablePanel extends JPanel {
 
     private JTable petTable;
     private DefaultTableModel tableModel;
-
-    //Persistent objects
-    private final JLabel statusLabel;
-    private final PetRepository petRepository;
-    private final OwnerRepository ownerRepository;
-    private final StayRepository stayRepository;
-    private final CurrentStaysTablePanel currentStaysTablePanel;
-
     private int lastSortedModelColumn = -1;
     private boolean ascending = true;
+    private PetDetailsScreen petDetailsScreen;
 
+    private final AppContext context;
     private static final String[] COLUMNS =
             {"ID", "Name", "Species", "Age", "Owner (ID)", "Notes"};
 
-    public PetTablePanel(PetRepository petRepository,
-                         OwnerRepository ownerRepository,
-                         StayRepository stayRepository,
-                         CurrentStaysTablePanel currentStaysTablePanel,
-                         User currentUser,
-                         JLabel statusLabel) {
+    public PetTablePanel(AppContext context) {
 
-        this.petRepository = petRepository;
-        this.ownerRepository = ownerRepository;
-        this.stayRepository = stayRepository;
-        this.currentStaysTablePanel = currentStaysTablePanel;
-        this.statusLabel = statusLabel;
+        this.context = context;
 
         setLayout(new BorderLayout());
 
         buildTableModel();
         buildTable();
         configureColumnWidths();
-        loadPetsIntoTable(petRepository);
-        addListeners(currentUser);
+        addListeners();
 
         add(new JScrollPane(petTable), BorderLayout.CENTER);
     }
@@ -87,7 +71,7 @@ public class PetTablePanel extends JPanel {
         petTable.getColumnModel().getColumn(5).setPreferredWidth(550);  // Notes
     }
 
-    private void addListeners(User currentUser) {
+    private void addListeners() {
 
         // Sorting listener
         petTable.getTableHeader().addMouseListener(new MouseAdapter() {
@@ -115,7 +99,7 @@ public class PetTablePanel extends JPanel {
                 String direction = ascending ? "ascending" : "descending";
                 String colName = petTable.getColumnName(viewColumn);
 
-                statusLabel.setText(
+                context.statusLabel.setText(
                         "Sorted by " + colName + " (" + direction + ") in " + String.format("%.3f ms", ms)
                 );
             }
@@ -127,7 +111,7 @@ public class PetTablePanel extends JPanel {
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
                     try {
-                        openSelectedPet(currentUser);
+                        openSelectedPet();
                     } catch (SQLException ex) {
                         throw new RuntimeException(ex);
                     }
@@ -140,12 +124,12 @@ public class PetTablePanel extends JPanel {
         ----------------Data loading + Sorting Methods-------------------------
      */
 
-    public void loadPetsIntoTable(PetRepository petRepository) {
+    public void loadPetsIntoTable() {
         tableModel.setRowCount(0);
 
-        for (Pet pet : petRepository.getPetList()) {
+        for (Pet pet : context.petRepository.getPetList()) {
 
-            Owner owner = ownerRepository.getOwnerById(pet.getOwnerId());
+            Owner owner = context.ownerRepository.getOwnerById(pet.getOwnerId());
             String ownerLabel;
             if (owner != null) {
                 ownerLabel = owner.getName() + " (" + owner.getOwnerId() + ")";
@@ -171,8 +155,8 @@ public class PetTablePanel extends JPanel {
         if (comparator == null) return;
         if (!ascending) comparator = comparator.reversed();
 
-        petRepository.sortPetsBy(comparator);
-        loadPetsIntoTable(petRepository);
+        context.petRepository.sortPetsBy(comparator);
+        loadPetsIntoTable();
     }
 
     private Comparator<Pet> getComparator(int columnIndex) {
@@ -184,7 +168,7 @@ public class PetTablePanel extends JPanel {
             //Compare this column by owner name instead of Owner ID
             case 4: return Comparator.comparing(
                     pet -> {
-                        Owner owner = ownerRepository.getOwnerById(pet.getOwnerId());
+                        Owner owner = context.ownerRepository.getOwnerById(pet.getOwnerId());
                         return owner != null ? owner.getName() : "";
                     },
                     String.CASE_INSENSITIVE_ORDER
@@ -215,21 +199,34 @@ public class PetTablePanel extends JPanel {
         petTable.getTableHeader().repaint();
     }
 
-    private void openSelectedPet(User currentUser) throws SQLException {
+    private void openSelectedPet() throws SQLException {
         int viewRow = petTable.getSelectedRow();
         if (viewRow < 0) return;
 
         //Convert view row to model row
-        //Initially did not do this, had a bug when user dragged ID column before selecting
         int modelRow = petTable.convertRowIndexToModel(viewRow);
-
-        //PetId is always column 0 in the model row
         int petId = (int) petTable.getModel().getValueAt(modelRow, 0);
 
-        Pet pet = petRepository.getPetById(petId);
+        Pet pet = context.petRepository.getPetById(petId);
 
-        if (pet != null) {
-            new PetDetailsScreen(pet, currentUser, ownerRepository, stayRepository, currentStaysTablePanel, petRepository).setVisible(true);
+        if (pet == null) return;
+
+        //If a details screen is already open, close it and set it to null to make way for new one
+        if (petDetailsScreen != null) {
+            petDetailsScreen.dispose();
+            petDetailsScreen = null;
         }
+
+        petDetailsScreen = new PetDetailsScreen(pet, context);
+
+        //Set petdetailsscreen back to null to reopen later
+        petDetailsScreen.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                petDetailsScreen = null;
+            }
+        });
+
+        petDetailsScreen.setVisible(true);
     }
 }

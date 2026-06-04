@@ -1,50 +1,41 @@
-//Packages
+//Package
 package com.petboarding.View.DetailViews;
 
 //Imports
-import com.petboarding.Repository.OwnerRepository;
+import com.petboarding.View.AppContext;
+import com.petboarding.Database.PetDAO;
 import com.petboarding.Models.Owner;
 import com.petboarding.Models.Pet;
-import com.petboarding.Database.PetDAO;
-import com.petboarding.Models.User;
-import com.petboarding.Repository.PetRepository;
-import com.petboarding.Repository.StayRepository;
 import com.petboarding.View.CreateViews.CheckInStayScreen;
-import com.petboarding.View.DataViews.CurrentStaysTablePanel;
 import com.petboarding.View.EditViews.EditPetScreen;
+
 import javax.swing.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.sql.SQLException;
 import java.util.List;
 
 public class PetDetailsScreen extends JFrame {
 
-    private User currentUser;
+    private final AppContext context;
+
     private JLabel nameLabel, speciesLabel, ageLabel, ownerLabel, notesLabel, boardedLabel;
-    private JPanel staysPanel;
+    private JPanel staysHistoryPanel;
     private String currentlyBoarded = "";
     private Pet pet;
-
-    private final StayRepository stayRepository;
-    private final CurrentStaysTablePanel currentStaysTablePanel;
-    private final PetRepository petRepository;
-
+    private EditPetScreen editPetScreen;
 
     //Construct pet details screen
-    public PetDetailsScreen(
-            Pet pet,
-            User user,
-            OwnerRepository ownerRepository,
-            StayRepository stayRepository,
-            CurrentStaysTablePanel currentStaysTablePanel,
-            PetRepository petRepository) throws SQLException {
-        this.currentUser = user;
+    public PetDetailsScreen(Pet pet, AppContext context) throws SQLException {
+
         this.pet = pet;
-        this.stayRepository = stayRepository;
-        this.currentStaysTablePanel = currentStaysTablePanel;
-        this.petRepository = petRepository;
-        Owner owner = ownerRepository.getOwnerById(pet.getOwnerId());
+        this.context = context;
+
+        Owner owner = context.ownerRepository.getOwnerById(pet.getOwnerId());
+
         setTitle("Pet Details - " + pet.getName());
         setSize(400, 700);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
         //create new panel for pet details
@@ -71,17 +62,21 @@ public class PetDetailsScreen extends JFrame {
         panel.add(new JLabel(" "));
         panel.add(new JLabel("Stay History:"));
 
-        staysPanel = new JPanel();
-        staysPanel.setLayout(new BoxLayout(staysPanel, BoxLayout.Y_AXIS));
-        panel.add(staysPanel);
+        staysHistoryPanel = new JPanel();
+        staysHistoryPanel.setLayout(new BoxLayout(staysHistoryPanel, BoxLayout.Y_AXIS));
+        panel.add(staysHistoryPanel);
 
         loadStayHistory();
 
-        if ((currentUser.isStaff() || currentUser.isAdmin()) && currentlyBoarded.equalsIgnoreCase("NO")) {
+        /*
+            Check-in button for STAFF and ADMIN only
+            Only show if pet is NOT currently boarded
+         */
+        if ((context.currentUser.isStaff() || context.currentUser.isAdmin()) && currentlyBoarded.equalsIgnoreCase("NO")) {
             JButton checkInButton = new JButton("Check In");
 
             checkInButton.addActionListener(e -> {
-                new CheckInStayScreen(pet, currentUser, stayRepository, currentStaysTablePanel, this).setVisible(true);
+                new CheckInStayScreen(pet,this, context).setVisible(true);
             });
 
             panel.add(Box.createVerticalStrut(10));
@@ -89,19 +84,18 @@ public class PetDetailsScreen extends JFrame {
         }
 
         /*
-            Check if current user is an ADMIN and display appropriate buttons
+            Admin-only buttons
          */
-        if (currentUser.isAdmin()) {
-            //Edit pet button for admins only
-            JButton editButton = new JButton("Edit Pet");
-            editButton.addActionListener(e -> {
-                new EditPetScreen(pet, this).setVisible(true);
-            });
+        if (context.currentUser.isAdmin()) {
 
-            //Owner details button for admins only
+            //Edit pet button
+            JButton editButton = new JButton("Edit Pet");
+            editButton.addActionListener(e -> openEditPetScreen());
+
+            //Owner details button
             JButton ownerButton = new JButton("Owner Details");
             ownerButton.addActionListener(e -> {
-                new OwnerDetailsScreen(owner, currentUser).setVisible(true);
+                new OwnerDetailsScreen(owner, context).setVisible(true);
             });
 
             panel.add(Box.createVerticalStrut(10));
@@ -116,20 +110,20 @@ public class PetDetailsScreen extends JFrame {
 
     //Load this pet's stays history from database
     private void loadStayHistory() throws SQLException {
-        staysPanel.removeAll();
+        staysHistoryPanel.removeAll();
 
         List<String> stays = PetDAO.getStayHistory(pet.getPetId());
 
         if (stays.isEmpty()) {
-            staysPanel.add(new JLabel(" - No stays found"));
+            staysHistoryPanel.add(new JLabel(" - No stays found"));
         } else {
             for (String stay : stays) {
-                staysPanel.add(new JLabel(" - " + stay));
+                staysHistoryPanel.add(new JLabel(" - " + stay));
             }
         }
         setCurrentlyBoarded();
-        staysPanel.revalidate();
-        staysPanel.repaint();
+        staysHistoryPanel.revalidate();
+        staysHistoryPanel.repaint();
     }
 
     //Refresh details in UI
@@ -150,7 +144,25 @@ public class PetDetailsScreen extends JFrame {
             currentlyBoarded = "No";
         }
 
-        //Set boardedLabel to show current boarding status
         boardedLabel.setText("Currently boarded: " + currentlyBoarded);
+    }
+
+    private void openEditPetScreen() {
+        if (editPetScreen != null) {
+            editPetScreen.toFront();
+            editPetScreen.requestFocus();
+            return;
+        }
+
+        editPetScreen = new EditPetScreen(pet, this, context);
+
+        editPetScreen.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                editPetScreen = null;
+            }
+        });
+
+        editPetScreen.setVisible(true);
     }
 }

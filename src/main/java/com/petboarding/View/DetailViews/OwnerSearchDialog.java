@@ -22,6 +22,7 @@ public class OwnerSearchDialog extends JDialog {
         this.parent = parent;
 
         setSize(500, 300);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(parent);
 
         String[] cols = {"Owner ID", "Name", "Phone"};

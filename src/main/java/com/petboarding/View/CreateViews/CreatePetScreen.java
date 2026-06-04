@@ -1,11 +1,11 @@
+//Package
 package com.petboarding.View.CreateViews;
 
+//Imports
 import com.petboarding.Models.Owner;
 import com.petboarding.Models.Pet;
-import com.petboarding.Repository.OwnerRepository;
-import com.petboarding.Repository.PetRepository;
 import com.petboarding.Database.PetDAO;
-import com.petboarding.View.DataViews.PetTablePanel;
+import com.petboarding.View.AppContext;
 import com.petboarding.View.DetailViews.OwnerSearchDialog;
 
 import javax.swing.*;
@@ -20,17 +20,14 @@ public class CreatePetScreen extends JFrame {
     private JButton searchOwnerButton;
     private JButton saveButton;
 
-    private final PetRepository petRepository;
-    private final OwnerRepository ownerRepository;
-    private final PetTablePanel petTablePanel;
+    private final AppContext context;
 
-    public CreatePetScreen(PetRepository petRepository, OwnerRepository ownerRepository, PetTablePanel petTablePanel) {
-        this.petRepository = petRepository;
-        this.ownerRepository = ownerRepository;
-        this.petTablePanel = petTablePanel;
+    public CreatePetScreen(AppContext context) {
+        this.context = context;
 
         setTitle("Create New Pet");
         setSize(400, 350);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new GridLayout(7, 2, 5, 5));
 
@@ -77,7 +74,7 @@ public class CreatePetScreen extends JFrame {
     }
 
     private void openOwnerSearch() {
-        new OwnerSearchDialog(ownerRepository, this).setVisible(true);
+        new OwnerSearchDialog(context.ownerRepository, this).setVisible(true);
     }
 
     public void setSelectedOwner(Owner owner) {
@@ -106,9 +103,9 @@ public class CreatePetScreen extends JFrame {
             int generatedId = PetDAO.addPet(newPet);
             newPet.setPetId(generatedId);
 
-            // Add to repository
-            petRepository.addPet(newPet);
-            petTablePanel.loadPetsIntoTable(petRepository);
+            // Add to repository and refresh main pet table
+            context.petRepository.addPet(newPet);
+            context.petTablePanel.loadPetsIntoTable();
 
             JOptionPane.showMessageDialog(this, "Pet created successfully!");
             dispose();
