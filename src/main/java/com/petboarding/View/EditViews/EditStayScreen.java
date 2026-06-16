@@ -11,15 +11,12 @@ import java.sql.SQLException;
 
 public class EditStayScreen extends JFrame {
 
-    private final StayDetailsScreen parent;
     private final AppContext context;
+    private final StayDetailsScreen parent;
     private final Stay stay;
 
-    // Editable fields (declared once, used everywhere)
-    private JTextField checkInField;
-    private JTextField checkOutField;
-    private JTextField dailyRateField;
-    private JTextField groomingField;
+    //Fields
+    private JTextField checkInField, checkOutField, dailyRateField, groomingField;
     private JComboBox<String> statusDropdown;
 
     public EditStayScreen(Stay stay, StayDetailsScreen parent, AppContext context) {
@@ -33,7 +30,7 @@ public class EditStayScreen extends JFrame {
 
         JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
 
-        //Create fields
+        //Create and fill fields
         checkInField = new JTextField(stay.getCheckInDate());
         checkOutField = new JTextField(stay.getCheckOutDate());
         dailyRateField = new JTextField(String.valueOf(stay.getDailyRate()));
@@ -74,18 +71,21 @@ public class EditStayScreen extends JFrame {
             stay.setGrooming(Integer.parseInt(groomingField.getText()));
             stay.setStatus(statusDropdown.getSelectedItem().toString());
 
-            // Update DB
+            //Update DB
             StayDAO.updateStay(stay);
 
             boolean completed = stay.getStatus().equalsIgnoreCase("Completed");
             boolean nowInProgress = stay.getStatus().equalsIgnoreCase("In Progress");
 
-            //completed, remove from repo
+            /*
+                This is to ensure the repo stays in sync in case the stay is manually edited to Completed or In Progress
+             */
+            //Changed to Completed, remove from repo
             if (completed) {
                 context.stayRepository.removeStay(stay.getStayId());
             }
 
-            // CASE 2: In Progress → ensure it is in repository
+            //Changed to In Progress, ensure it is in repository
             if (nowInProgress) {
                 if (!context.stayRepository.containsStay(stay.getStayId())) {
                     context.stayRepository.addStay(stay);

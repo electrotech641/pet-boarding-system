@@ -16,11 +16,12 @@ import java.awt.event.WindowEvent;
 import java.util.Comparator;
 
 public class OwnerTablePanel extends JPanel {
-    private JTable ownerTable;
-    private DefaultTableModel tableModel;
+
     private final AppContext context;
     private OwnerDetailsScreen ownerDetailsScreen;
 
+    private JTable ownerTable;
+    private DefaultTableModel tableModel;
     private int lastSortedModelColumn = -1;
     private boolean ascending = true;
 

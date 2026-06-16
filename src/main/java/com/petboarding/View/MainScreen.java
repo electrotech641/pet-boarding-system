@@ -3,6 +3,7 @@ package com.petboarding.View;
 
 //Imports
 import com.petboarding.Database.UserDAO;
+import com.petboarding.Main;
 import com.petboarding.Repository.StayRepository;
 import com.petboarding.Repository.OwnerRepository;
 import com.petboarding.Repository.PetRepository;
@@ -93,7 +94,7 @@ public class MainScreen extends JFrame {
     }
 
     private JLabel buildLogoPanel() {
-        ImageIcon logoIcon = new ImageIcon(getClass().getResource("/logo.png"));
+        ImageIcon logoIcon = new ImageIcon(Main.class.getResource("/logo.png"));
         JLabel logoLabel = new JLabel(logoIcon);
         logoLabel.setHorizontalAlignment(SwingConstants.CENTER);
 

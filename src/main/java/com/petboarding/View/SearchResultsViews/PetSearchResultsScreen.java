@@ -56,7 +56,7 @@ public class PetSearchResultsScreen extends JFrame {
 
         table = new JTable(model);
 
-        // Double-click listener
+        //Double-click listener
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {

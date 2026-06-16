@@ -19,12 +19,11 @@ import java.util.Comparator;
 
 public class CurrentStaysTablePanel extends JPanel {
 
-    private JTable staysTable;
-    private DefaultTableModel tableModel;
+    private final AppContext context;
     private StayDetailsScreen stayDetailsScreen;
 
-    private final AppContext context;
-
+    private JTable staysTable;
+    private DefaultTableModel tableModel;
     private int lastSortedModelColumn = -1;
     private boolean ascending = true;
 
@@ -49,9 +48,9 @@ public class CurrentStaysTablePanel extends JPanel {
 
     }
 
-    // ------------------------------------------------------------
-    // UI SETUP
-    // ------------------------------------------------------------
+    /*
+      -----------------UI Setup--------------------------
+     */
 
     private void buildTableModel() {
         tableModel = new DefaultTableModel(COLUMNS, 0) {
@@ -81,7 +80,7 @@ public class CurrentStaysTablePanel extends JPanel {
 
     private void addListeners() {
 
-        // Sorting listener
+        //Sorting listener
         staysTable.getTableHeader().addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
@@ -114,7 +113,7 @@ public class CurrentStaysTablePanel extends JPanel {
             }
         });
 
-        // Double-click listener
+        //Double-click listener
         staysTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
@@ -237,13 +236,13 @@ public class CurrentStaysTablePanel extends JPanel {
             return;
         }
 
-        // If window exists, reuse it
+        //If window exists, reuse it
         if ((stayDetailsScreen.getExtendedState() & JFrame.ICONIFIED) != 0) {
             stayDetailsScreen.setExtendedState(JFrame.NORMAL);
         }
 
         try {
-            stayDetailsScreen.loadStay(stay);   // you will add this method next
+            stayDetailsScreen.loadStay(stay);
         } catch (Exception ex) {
             ex.printStackTrace();
         }

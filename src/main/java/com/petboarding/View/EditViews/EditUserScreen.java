@@ -19,9 +19,10 @@ public class EditUserScreen extends JFrame {
     private final UserDAO userDAO = new UserDAO();
     private final AppContext context;
 
-    private final JTextField usernameField;
-    private final JComboBox<String> roleDropdown;
-    private final JPasswordField passwordField;
+    //Fields
+    private JTextField usernameField;
+    private JComboBox<String> roleDropdown;
+    private JPasswordField passwordField;
 
     public EditUserScreen(AppContext context, User targetUser, ManageUsersScreen parent) {
         this.context = context;
@@ -34,13 +35,12 @@ public class EditUserScreen extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new GridLayout(4, 2, 10, 10));
 
+        //Create fields and buttons
         usernameField = new JTextField(targetUser.getUsername());
         roleDropdown = new JComboBox<>(new String[]{"ADMIN", "READ_ONLY", "STAFF"});
         roleDropdown.setSelectedItem(targetUser.getRole());
-
         passwordField = new JPasswordField();
         passwordField.setToolTipText("Leave blank to keep current password");
-
         JButton saveButton = new JButton("Save Changes");
         saveButton.addActionListener(e -> saveChanges());
         JButton deleteButton = new JButton("Delete User");
@@ -52,6 +52,7 @@ public class EditUserScreen extends JFrame {
             }
         });
 
+        //Layout
         add(new JLabel("Username:"));
         add(usernameField);
 
@@ -78,7 +79,7 @@ public class EditUserScreen extends JFrame {
         try {
             boolean passwordChanged = !newPassword.isEmpty();
 
-            // If password changed, validate + hash
+            //If password changed, validate against requirements
             if (passwordChanged) {
                 String validationMessage = PasswordUtil.getPasswordValidationMessage(newPassword);
                 if (validationMessage != null) {
@@ -101,7 +102,7 @@ public class EditUserScreen extends JFrame {
             if (updatedUser != null) {
                 JOptionPane.showMessageDialog(this, "User updated successfully");
 
-                // Update repository
+                //Update repository
                 context.userRepository.updateUser(updatedUser);
                 parent.refreshTable();
                 dispose();
@@ -127,7 +128,7 @@ public class EditUserScreen extends JFrame {
 
 
         if (choice != JOptionPane.YES_OPTION) {
-            return; // User canceled
+            return;
         }
 
         //User confirmed, try to delete user from DB then repository

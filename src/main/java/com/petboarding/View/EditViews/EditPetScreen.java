@@ -10,10 +10,12 @@ import javax.swing.*;
 import java.awt.*;
 
 public class EditPetScreen extends JFrame{
+
     private PetDetailsScreen parent;
     private final AppContext context;
     private Pet pet;
 
+    //Fields
     private JTextField nameField, speciesField, ageField, notesField;
 
     public EditPetScreen(Pet pet, PetDetailsScreen parent, AppContext context) {
@@ -27,6 +29,7 @@ public class EditPetScreen extends JFrame{
 
         JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
 
+        //Fill fields
         nameField = new JTextField(pet.getName());
         speciesField = new JTextField(pet.getSpecies());
         ageField = new JTextField(String.valueOf(pet.getAge()));

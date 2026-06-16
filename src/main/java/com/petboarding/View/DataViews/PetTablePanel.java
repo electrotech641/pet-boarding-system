@@ -19,13 +19,13 @@ import java.util.Comparator;
 
 public class PetTablePanel extends JPanel {
 
+    private final AppContext context;
+    private PetDetailsScreen petDetailsScreen;
+
     private JTable petTable;
     private DefaultTableModel tableModel;
     private int lastSortedModelColumn = -1;
     private boolean ascending = true;
-    private PetDetailsScreen petDetailsScreen;
-
-    private final AppContext context;
     private static final String[] COLUMNS =
             {"ID", "Name", "Species", "Age", "Owner (ID)", "Notes"};
 

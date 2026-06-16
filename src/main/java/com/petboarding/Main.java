@@ -32,13 +32,24 @@ import com.petboarding.Database.CSVLoader;
 import com.petboarding.Models.User;
 import com.petboarding.View.LoginScreen;
 
+import java.io.IOException;
+import java.util.logging.FileHandler;
+import java.util.logging.Handler;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+
 public class Main {
 
     //CHANGE THESE BEFORE INITIAL BOOT FOR DEFAULT ADMIN ACCOUNT
     private static final String defaultAdmin = "admin";
     private static final String defaultAdminPw = "admin";
+    private static Logger logger = Logger.getLogger("PetBoarding");
 
     public static void main(String[] args) {
+
+        setupLogging();
+
+        logger.info("Application starting...");
 
         /*
             Get database connection from DatabaseManager class
@@ -95,4 +106,25 @@ public class Main {
         }
     }
 
+    private static void setupLogging() {
+        try {
+            //Rotate when file reaches 1 MB, keep 5 backups
+            FileHandler handler = new FileHandler("app.log", 1_000_000, 5, true);
+
+            //Timestamped, readable format
+            handler.setFormatter(new SimpleFormatter());
+
+            //Remove default console handler
+            Logger root = Logger.getLogger("");
+            for (Handler h : root.getHandlers()) {
+                root.removeHandler(h);
+            }
+
+            root.addHandler(handler);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
+

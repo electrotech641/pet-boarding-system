@@ -38,6 +38,7 @@ public class UserDAO {
 
     }
 
+    //Loads UserRepository
     public static void loadUsers(UserRepository userRepository) {
         String sql = "SELECT * FROM users";
 
@@ -87,7 +88,7 @@ public class UserDAO {
         //Check if it is self registration using login screen, no user current logged in
         boolean isSelfRegistration = currentUser == null;
 
-        //Backend check for admin, if non-read-only user being created
+        //Backend check for admin access, if non-read-only user being created
         if (!isSelfRegistration && !currentUser.getRole().equals("ADMIN")) {
             throw new SecurityException("Only admins can create users");
         }
@@ -115,7 +116,7 @@ public class UserDAO {
                 return null; // insert failed
             }
 
-            // Retrieve generated user_id
+            //Retrieve generated user_id
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 if (keys.next()) {
                     int userId = keys.getInt(1);
@@ -158,7 +159,7 @@ public class UserDAO {
 
             //Update salt and hash if password was changed
             if (passwordChanged) {
-                // Hash new password
+                //Hash new password
                 String newSalt = PasswordUtil.generateSalt();
                 String newHash = PasswordUtil.hashPassword(targetUser.getPasswordHash(), newSalt);
 
@@ -166,7 +167,7 @@ public class UserDAO {
                 statement.setString(4, newSalt);
                 statement.setInt(5, targetUser.getId());
 
-                // Update user object
+                //Update user object
                 targetUser.setPasswordHash(newHash);
                 targetUser.setSalt(newSalt);
 

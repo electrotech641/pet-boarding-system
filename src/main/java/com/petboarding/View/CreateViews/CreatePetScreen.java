@@ -83,13 +83,32 @@ public class CreatePetScreen extends JFrame {
 
     private void savePet() {
         try {
+            //Validate owner selection
+            if (ownerIdField.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Please select an owner before saving the pet.",
+                        "Missing Owner",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
             String name = nameField.getText().trim();
             String species = speciesField.getText().trim();
-            int age = Integer.parseInt(ageField.getText().trim());
+            String ageText = ageField.getText().trim();
             String notes = notesArea.getText().trim();
+
+            //Validate required fields
+            if (name.isEmpty() || species.isEmpty() || ageText.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Name, species, and age are required fields.",
+                        "Missing Information",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            int age = Integer.parseInt(ageText);
             int ownerId = Integer.parseInt(ownerIdField.getText().trim());
 
-            //Create pet with temporary ID, to be set once added to DB
             Pet newPet = new Pet(
                     -1,
                     ownerId,

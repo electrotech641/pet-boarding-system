@@ -18,14 +18,14 @@ import java.util.List;
 public class PetDetailsScreen extends JFrame {
 
     private final AppContext context;
-
-    private JLabel idLabel,nameLabel, speciesLabel, ageLabel, ownerLabel, notesLabel, boardedLabel;
-    private JPanel staysHistoryPanel;
-    private JButton checkInButton, editButton, ownerButton;
-
     private String currentlyBoarded = "";
     private Pet pet;
     private EditPetScreen editPetScreen;
+
+    //UI elements
+    private JLabel idLabel,nameLabel, speciesLabel, ageLabel, ownerLabel, notesLabel, boardedLabel;
+    private JPanel staysHistoryPanel;
+    private JButton checkInButton, editButton, ownerButton;
 
     //Construct pet details screen
     public PetDetailsScreen(Pet pet, AppContext context) throws SQLException {
@@ -40,6 +40,7 @@ public class PetDetailsScreen extends JFrame {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
+        //Create labels and buttons
         idLabel = new JLabel();
         nameLabel = new JLabel();
         speciesLabel = new JLabel();
@@ -47,22 +48,19 @@ public class PetDetailsScreen extends JFrame {
         ownerLabel = new JLabel();
         notesLabel = new JLabel();
         boardedLabel = new JLabel();
-
         checkInButton = new JButton("Check In");
         checkInButton.addActionListener(e -> {
             new CheckInStayScreen(pet, this, context).setVisible(true);
         });
-
         editButton = new JButton("Edit Pet");
         editButton.addActionListener(e -> openEditPetScreen());
-
         ownerButton = new JButton("Owner Details");
         ownerButton.addActionListener(e -> {
             Owner owner = context.ownerRepository.getOwnerById(pet.getOwnerId());
             new OwnerDetailsScreen(owner, context).setVisible(true);
         });
 
-
+        //Layout
         panel.add(idLabel);
         panel.add(nameLabel);
         panel.add(speciesLabel);

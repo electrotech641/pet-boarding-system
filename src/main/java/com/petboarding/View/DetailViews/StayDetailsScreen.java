@@ -14,22 +14,14 @@ import java.sql.SQLException;
 
 public class StayDetailsScreen extends JFrame {
 
-    private Stay stay;
     private final AppContext context;
+    private Stay stay;
 
-    // Buttons
-    private JButton checkOutButton;
-    private JButton editStayButton;
-    private JButton petDetailsButton;
-    private JButton ownerDetailsButton;
+    //Buttons and labels
+    private JButton checkOutButton, editStayButton, petDetailsButton, ownerDetailsButton;
+    private JLabel checkInLabel, checkOutLabel, petLabel, ownerLabel;
 
-    // Labels
-    private JLabel checkInLabel;
-    private JLabel checkOutLabel;
-    private JLabel petLabel;
-    private JLabel ownerLabel;
-
-    // Child screens
+    //Child screens
     private EditStayScreen editStayScreen;
     private PetDetailsScreen petDetailsScreen;
     private OwnerDetailsScreen ownerDetailsScreen;
@@ -46,11 +38,11 @@ public class StayDetailsScreen extends JFrame {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        // Load initial pet + owner
+        //Load pet and owner
         Pet pet = context.petRepository.getPetById(stay.getPetId());
         Owner owner = context.ownerRepository.getOwnerById(pet.getOwnerId());
 
-        // Labels
+        //Create label
         petLabel = new JLabel("Pet: " + pet.getName());
         ownerLabel = new JLabel("Owner: " + owner.getName());
         checkInLabel = new JLabel("Check-In: " + stay.getCheckInDate());
@@ -66,6 +58,7 @@ public class StayDetailsScreen extends JFrame {
             }
         });
 
+        //Layout
         panel.add(new JLabel("Stay ID: " + stay.getStayId()));
         panel.add(petLabel);
         panel.add(ownerLabel);
@@ -118,7 +111,7 @@ public class StayDetailsScreen extends JFrame {
 
     public void refreshDetails() {
         try {
-            // If stay is null, clear UI and hide all buttons
+            //If stay is null, clear UI and hide all buttons
             if (stay == null) {
                 setTitle("Stay Details");
 
@@ -137,10 +130,10 @@ public class StayDetailsScreen extends JFrame {
                 return;
             }
 
-            // Reload pet
+            //Reload pet
             Pet pet = context.petRepository.getPetById(stay.getPetId());
 
-            // Reload owner if pet exists
+            //Reload owner if pet exists
             Owner owner = null;
             if (pet != null) {
                 petLabel.setText("Pet: " + pet.getName());
@@ -150,21 +143,21 @@ public class StayDetailsScreen extends JFrame {
                 petLabel.setText("Pet: Unknown");
             }
 
-            // Update title
+            //Update title
             setTitle("Stay Details - Stay #" + stay.getStayId());
 
-            // Update owner label
+            //Update owner label
             if (owner != null) {
                 ownerLabel.setText("Owner: " + owner.getName());
             } else {
                 ownerLabel.setText("Owner: Unknown");
             }
 
-            // Update check-in/out labels
+            //Update check-in/out labels
             checkInLabel.setText("Check-In: " + stay.getCheckInDate());
             checkOutLabel.setText("Check-Out: " + stay.getCheckOutDate());
 
-            // Update Check-Out button visibility
+            //Update Check-Out button visibility
             boolean canManage = context.currentUser.isAdmin() || context.currentUser.isStaff();
             boolean notCheckedOut = stay.getStatus().equalsIgnoreCase("In Progress");
 
@@ -172,11 +165,11 @@ public class StayDetailsScreen extends JFrame {
                 checkOutButton.setVisible(canManage && notCheckedOut);
             }
 
-            // Show management buttons if user can manage
+            //Show edit stay and owner details is user is non-READ_ONLY
             if (editStayButton != null) editStayButton.setVisible(canManage);
             if (ownerDetailsButton != null) ownerDetailsButton.setVisible(canManage);
 
-            // Pet Details is always visible
+            //Pet Details is always visible
             if (petDetailsButton != null) petDetailsButton.setVisible(true);
 
             revalidate();
